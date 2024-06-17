@@ -1,5 +1,9 @@
 include(CMakePrintHelpers)
 
-add_app(${CMAKE_PROJECT_NAME}
-        main.cpp
+add_app(server
+        server.cpp
+        )
+
+add_app(client
+        client.cpp
         )
