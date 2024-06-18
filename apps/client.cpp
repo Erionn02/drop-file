@@ -1,5 +1,4 @@
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -9,9 +8,9 @@ using boost::asio::ip::tcp;
 constexpr int max_length{1024};
 
 
-class client {
+class Client {
 public:
-    client(boost::asio::io_context &io_context,
+    Client(boost::asio::io_context &io_context,
            boost::asio::ssl::context &context,
            const tcp::resolver::results_type &endpoints)
             : socket_(io_context, context) {
@@ -26,17 +25,9 @@ public:
 private:
     bool verify_certificate(bool preverified,
                             boost::asio::ssl::verify_context &ctx) {
-        // The verify callback can be used to check whether the certificate that is
-        // being presented is valid for the peer. For example, RFC 2818 describes
-        // the steps involved in doing this for HTTPS. Consult the OpenSSL
-        // documentation for more details. Note that the callback is called once
-        // for each certificate in the certificate chain, starting from the root
-        // certificate authority.
-
-        // In this example we will simply print the certificate's subject name.
         char subject_name[256];
         X509 *cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-        X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+        X509_NAME_oneline(X509_get_subject_name(cert), subject_name, sizeof(subject_name));
         std::cout.setf(std::ios_base::boolalpha);
         std::cout << "Preverified: "<<preverified<<", Verifying " << subject_name << "\n";
 
@@ -44,15 +35,9 @@ private:
     }
 
     void connect(const tcp::resolver::results_type &endpoints) {
-        boost::asio::async_connect(socket_.lowest_layer(), endpoints,
-                                   [this](const boost::system::error_code &error,
-                                          const tcp::endpoint & /*endpoint*/) {
-                                       if (!error) {
-                                           handshake();
-                                       } else {
-                                           std::cout << "Connect failed: " << error.message() << "\n";
-                                       }
-                                   });
+        socket_.lowest_layer().connect(*endpoints.begin());
+        handshake();
+        socket_.handshake(boost::asio::ssl::stream_base::client);
     }
 
     void handshake() {
@@ -110,7 +95,7 @@ int main() {
 //    ctx.set_default_verify_paths();
     ctx.load_verify_file("/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
 
-    client c(io_context, ctx, endpoints);
+    Client c(io_context, ctx, endpoints);
 
     io_context.run();
 
