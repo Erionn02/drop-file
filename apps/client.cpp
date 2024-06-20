@@ -1,19 +1,24 @@
-#include <cstring>
-#include <iostream>
+#include "SocketBase.hpp"
+
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <fmt/format.h>
+#include <nlohmann/json.hpp>
+
+#include <cstring>
+#include <iostream>
+#include <filesystem>
 
 using boost::asio::ip::tcp;
 
-constexpr int max_length{1024};
 
 
-class Client {
+class Client: public SocketBase {
 public:
     Client(boost::asio::io_context &io_context,
            boost::asio::ssl::context &context,
            const tcp::resolver::results_type &endpoints)
-            : socket_(io_context, context) {
+            : SocketBase({io_context, context}) {
         socket_.set_verify_mode(boost::asio::ssl::verify_peer);
         socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx){
             return verify_certificate(preverified, ctx);
@@ -36,63 +41,28 @@ private:
 
     void connect(const tcp::resolver::results_type &endpoints) {
         socket_.lowest_layer().connect(*endpoints.begin());
-        handshake();
         socket_.handshake(boost::asio::ssl::stream_base::client);
     }
-
-    void handshake() {
-        socket_.async_handshake(boost::asio::ssl::stream_base::client,
-                                [this](const boost::system::error_code &error) {
-                                    if (!error) {
-                                        send_request();
-                                    } else {
-                                        std::cout << "Handshake failed: " << error.message() << "\n";
-                                    }
-                                });
-    }
-
-    void send_request() {
-        std::cout << "Enter message: ";
-        std::cin.getline(request_, max_length);
-        size_t request_length = std::strlen(request_);
-
-        boost::asio::async_write(socket_,
-                                 boost::asio::buffer(request_, request_length),
-                                 [this](const boost::system::error_code &error, std::size_t length) {
-                                     if (!error) {
-                                         receive_response(length);
-                                     } else {
-                                         std::cout << "Write failed: " << error.message() << "\n";
-                                     }
-                                 });
-    }
-
-    void receive_response(std::size_t length) {
-        boost::asio::async_read(socket_,
-                                boost::asio::buffer(reply_, length),
-                                [this](const boost::system::error_code &error, std::size_t length) {
-                                    if (!error) {
-                                        std::cout << "Reply: ";
-                                        std::cout.write(reply_, (long int) length);
-                                        std::cout << "\n";
-                                    } else {
-                                        std::cout << "Read failed: " << error.message() << "\n";
-                                    }
-                                });
-    }
-
-    boost::asio::ssl::stream<tcp::socket> socket_;
-    char request_[max_length];
-    char reply_[max_length];
 };
 
-int main() {
+nlohmann::json buildJsonMetadata(const std::string &parsed_test_file_path, const std::string &action);
+
+//
+int main(int argc, char* argv[]) {
+    std::string parsed_test_file_path {"/tmp/send_test_file.txt"};
+    std::string action{"receive"};
+    if (argc == 1) {
+        action = "send";
+    }
+
+    nlohmann::json json = buildJsonMetadata(parsed_test_file_path, action);
+
     boost::asio::io_context io_context;
 
     tcp::resolver resolver(io_context);
     auto endpoints = resolver.resolve("localhost", "12345");
+    assert(!endpoints.empty());
     boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
-//    ctx.set_default_verify_paths();
     ctx.load_verify_file("/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
 
     Client c(io_context, ctx, endpoints);
@@ -101,4 +71,16 @@ int main() {
 
 
     return 0;
+}
+
+nlohmann::json buildJsonMetadata(const std::string &parsed_test_file_path, const std::string &action) {
+    std::filesystem::path file_path{parsed_test_file_path};
+    if (!std::filesystem::exists(file_path)) {
+        throw std::runtime_error(fmt::format("Given path {} does not exist!", file_path.string()));
+    }
+    nlohmann::json json{};
+    json["action"] = action;
+    json["filename"] =  file_path.filename();
+    json["file_size"] = std::filesystem::file_size(file_path);
+    return json;
 }

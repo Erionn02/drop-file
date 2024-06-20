@@ -1,42 +1,37 @@
-#include <thread>
-#include <vector>
-#include <spdlog/spdlog.h>
+#include "SocketBase.hpp"
 
+#include <spdlog/spdlog.h>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl/context_base.hpp>
 #include <boost/asio/ssl.hpp>
 
+#include <thread>
+#include <vector>
 
 using boost::asio::ip::tcp;
 
-class SessionSocket {
+class SessionSocket: public SocketBase {
 public:
     SessionSocket(tcp::socket socket, boost::asio::ssl::context &context)
-            : socket_(std::move(socket), context) {}
+            : SocketBase({std::move(socket), context}) {
+        start();
+    }
 
     void start() {
         socket_.handshake(boost::asio::ssl::stream_base::server);
     }
-
-    std::string read(std::size_t max_read_length) {
-        std::string str;
-        str.resize(max_read_length);
-        auto actual_read = socket_.read_some(boost::asio::buffer(str));
-        str.resize(actual_read);
-        return str;
-    }
-    void write(const std::string& message) {
-        socket_.write_some(boost::asio::buffer(message));
-    }
-
-private:
-    boost::asio::ssl::stream<tcp::socket> socket_;
 };
+
+class SessionsManager {
+public:
+    void add(SessionSocket){}
+};
+
 
 class Server {
 public:
-    Server(boost::asio::io_context &io_context, unsigned short port)
-            : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
+    Server(unsigned short port)
+            : acceptor_(io_service, tcp::endpoint(tcp::v4(), port)),
               context_(boost::asio::ssl::context::sslv23) {
         context_.set_options(
                 boost::asio::ssl::context::default_workarounds
@@ -49,26 +44,32 @@ public:
         do_accept();
     }
 
+    void run() {
+        io_service.run();
+    }
+
 private:
     void do_accept() {
         acceptor_.async_accept(
                 [this](const boost::system::error_code &error, tcp::socket socket) {
                     if (!error) {
-                        std::make_shared<SessionSocket>(std::move(socket), context_)->start();
+                        session_manager.add(SessionSocket(std::move(socket), context_));
                     }
 
                     do_accept();
                 });
     }
 
+    boost::asio::io_service io_service;
     tcp::acceptor acceptor_;
     boost::asio::ssl::context context_;
+    SessionsManager session_manager{};
 };
 
 int main() {
-    boost::asio::io_service io_service;
     unsigned short port = 12345;
     spdlog::info("Starting server at port: {}", port);
-    Server server(io_service, port);
-    io_service.run();
+    Server server{port};
+    server.run();
+
 }
