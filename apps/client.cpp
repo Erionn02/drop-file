@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iostream>
 #include <filesystem>
+#include <thread>
 
 using boost::asio::ip::tcp;
 
@@ -49,13 +50,13 @@ nlohmann::json buildJsonMetadata(const std::string &parsed_test_file_path, const
 
 //
 int main(int argc, char* argv[]) {
-    std::string parsed_test_file_path {"/tmp/send_test_file.txt"};
+    (void)argv;
+    std::string parsed_test_file_path {"/home/kuba/send_test_file.txt"};
     std::string action{"receive"};
     if (argc == 1) {
         action = "send";
     }
 
-    nlohmann::json json = buildJsonMetadata(parsed_test_file_path, action);
 
     boost::asio::io_context io_context;
 
@@ -67,9 +68,14 @@ int main(int argc, char* argv[]) {
 
     Client c(io_context, ctx, endpoints);
 
-    io_context.run();
+    auto t = std::jthread{[&] {
+        io_context.run();
+    }};
 
-
+    nlohmann::json json = buildJsonMetadata(parsed_test_file_path, action);
+    c.send("wungewgegwegweg");
+    auto received = c.receive();
+    std::cout << received;
     return 0;
 }
 
