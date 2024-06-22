@@ -8,5 +8,7 @@ add_lib(template_lib_two
         SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/TestClass2.cpp
         )
 add_lib(drop-file-shared-lib
-        SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/SocketBase.cpp
+        SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/SocketBase.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/InitSessionMessage.cpp
         )

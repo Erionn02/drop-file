@@ -1,4 +1,5 @@
 #include "SocketBase.hpp"
+#include "InitSessionMessage.hpp"
 
 #include <spdlog/spdlog.h>
 #include <boost/asio.hpp>
@@ -48,10 +49,15 @@ private:
             std::string_view content {data_.data(), bytes_transferred};
             std::cout <<  content << std::endl;
             try {
-                auto json = nlohmann::json::parse(content);
+                nlohmann::json json = InitSessionMessage::create(content);
+                if (json[InitSessionMessage::ACTION_KEY] == "send") {
+                    // handle send request
+                } else {
+                    // handle receive request
+                }
                 socket_.async_write_some(asio::buffer(std::string("Gotcha json buddy")), callback(&ServerSessionSocket::handle_fist_write));
                 socket_.async_read_some(asio::buffer(data_), callback(&ServerSessionSocket::handle_read));
-            } catch (const nlohmann::json::exception& e) {
+            } catch (const InitSessionMessageException& e) {
                 disconnect(e.what());
             }
 

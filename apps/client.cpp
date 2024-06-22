@@ -1,9 +1,9 @@
 #include "SocketBase.hpp"
+#include "InitSessionMessage.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <fmt/format.h>
-#include <nlohmann/json.hpp>
 
 #include <cstring>
 #include <iostream>
@@ -46,9 +46,7 @@ private:
     }
 };
 
-nlohmann::json buildJsonMetadata(const std::string &parsed_test_file_path, const std::string &action);
 
-//
 int main(int argc, char* argv[]) {
     (void)argv;
     std::string parsed_test_file_path {"/home/kuba/send_test_file.txt"};
@@ -72,21 +70,9 @@ int main(int argc, char* argv[]) {
         io_context.run();
     }};
 
-    nlohmann::json json = buildJsonMetadata(parsed_test_file_path, action);
+    nlohmann::json json = InitSessionMessage::create(parsed_test_file_path, action);
     c.send("wungewgegwegweg");
     auto received = c.receive();
     std::cout << received;
     return 0;
-}
-
-nlohmann::json buildJsonMetadata(const std::string &parsed_test_file_path, const std::string &action) {
-    std::filesystem::path file_path{parsed_test_file_path};
-    if (!std::filesystem::exists(file_path)) {
-        throw std::runtime_error(fmt::format("Given path {} does not exist!", file_path.string()));
-    }
-    nlohmann::json json{};
-    json["action"] = action;
-    json["filename"] =  file_path.filename();
-    json["file_size"] = std::filesystem::file_size(file_path);
-    return json;
 }
