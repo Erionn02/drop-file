@@ -1,8 +1,8 @@
 #include "ServerSideClientSession.hpp"
-
 #include "InitSessionMessage.hpp"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
+
 
 
 ServerSideClientSession::ServerSideClientSession(tcp::socket socket, asio::ssl::context &context)
@@ -29,7 +29,7 @@ void ServerSideClientSession::disconnectWriteCallback(error_code, size_t) {
 void ServerSideClientSession::handleFirstRead(error_code error, size_t bytes_transferred)  {
     if (!error) {
         std::string_view content {data_.data(), bytes_transferred};
-        std::cout <<  content << std::endl;
+        spdlog::info(content);
         try {
             nlohmann::json json = InitSessionMessage::create(content);
             if (json[InitSessionMessage::ACTION_KEY] == "send") {
@@ -49,14 +49,14 @@ void ServerSideClientSession::handleFirstRead(error_code error, size_t bytes_tra
 
 void ServerSideClientSession::handleRead(error_code error, size_t bytes_transferred) {
     if (!error) {
-        std::cout << std::string_view(data_.data(), bytes_transferred) << std::endl;
+        spdlog::info(std::string_view(data_.data(), bytes_transferred));
         socket_.async_write_some(asio::buffer(std::string("ok")), callback(&ServerSideClientSession::handleWrite));
     }
 }
 
 void ServerSideClientSession::handleWrite(error_code ec, std::size_t bytes_transferred) {
     if (!ec) {
-        std::cout << std::string_view(data_.data(), bytes_transferred) << std::endl;
+        spdlog::info(std::string_view(data_.data(), bytes_transferred));
         socket_.async_read_some(asio::buffer(data_), callback(&ServerSideClientSession::handleRead));
     }
 }

@@ -1,16 +1,12 @@
-#include "SocketBase.hpp"
 #include "InitSessionMessage.hpp"
-
 #include "ClientSession.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <spdlog/spdlog.h>
 #include <fmt/format.h>
 
-#include <cstring>
 #include <iostream>
-#include <filesystem>
-#include <thread>
 
 using boost::asio::ip::tcp;
 
@@ -24,23 +20,14 @@ int main(int argc, char* argv[]) {
         action = "send";
     }
 
-
-    boost::asio::io_context io_context;
-    tcp::resolver resolver(io_context);
-    auto endpoints = resolver.resolve("localhost", "12345");
-    assert(!endpoints.empty());
-    boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
-    ctx.load_verify_file("/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
-
-    ClientSession c(io_context, ctx, endpoints);
-
-    auto t = std::jthread{[&] {
-        io_context.run();
-    }};
+    ClientSession client("localhost", 12345, "/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
+    client.start();
 
     nlohmann::json json = InitSessionMessage::create(parsed_test_file_path, action);
-    c.send(json.dump());
-    auto received = c.receive();
-    std::cout << received;
+    client.send(json.dump());
+
+    auto received = client.receive();
+    spdlog::info(received);
+
     return 0;
 }

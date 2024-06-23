@@ -2,15 +2,32 @@
 
 #include <spdlog/spdlog.h>
 
-ClientSession::ClientSession(boost::asio::io_context &io_context, boost::asio::ssl::context &context,
-                             const boost::asio::ip::basic_resolver<tcp, boost::asio::any_io_executor>::results_type &endpoints)
-        : SocketBase({io_context, context}) {
+ClientSession::ClientSession(const std::string &host, unsigned short port) : ClientSession() {
+    context.set_default_verify_paths();
+    connect(host, port);
+}
+
+ClientSession::ClientSession(const std::string &host, unsigned short port,
+                             const std::string &path_to_cert_authority_file) : ClientSession() {
+    context.load_verify_file(path_to_cert_authority_file);
+    connect(host, port);
+}
+
+ClientSession::ClientSession() : SocketBase({io_context, context}) {
     socket_.set_verify_mode(boost::asio::ssl::verify_peer);
-    socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx){
+    socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx) {
         return verify_certificate(preverified, ctx);
     });
+}
 
-    connect(endpoints);
+ClientSession::~ClientSession() {
+    io_context.stop();
+}
+
+void ClientSession::start() {
+    context_thread = std::jthread{[this] {
+        io_context.run();
+    }};
 }
 
 bool ClientSession::verify_certificate(bool preverified, boost::asio::ssl::verify_context &ctx) {
@@ -21,7 +38,13 @@ bool ClientSession::verify_certificate(bool preverified, boost::asio::ssl::verif
     return preverified;
 }
 
-void ClientSession::connect(const tcp::resolver::results_type &endpoints) {
+void ClientSession::connect(const std::string &host, unsigned short port) {
+    tcp::resolver resolver(io_context);
+    auto endpoints = resolver.resolve(host, std::to_string(port));
+    if (endpoints.empty()) {
+        throw SocketException(fmt::format("Did not find {}:{}", host, port));
+    }
+    assert(!endpoints.empty());
     socket_.lowest_layer().connect(*endpoints.begin());
     socket_.handshake(boost::asio::ssl::stream_base::client);
 }
