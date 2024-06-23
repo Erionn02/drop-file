@@ -6,19 +6,19 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio.hpp>
 
+#include <filesystem>
 
 using boost::asio::ip::tcp;
-using boost::system::error_code;
 class SessionsManager;
 
 class DropFileServer {
 public:
-    DropFileServer(unsigned short port);
+    DropFileServer(unsigned short port, const std::filesystem::path& key_cert_dir);
     void run();
 private:
-    void do_accept();
+    void acceptNewConnection();
 
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_context;
     tcp::acceptor acceptor_;
     boost::asio::ssl::context context_;
     std::shared_ptr<SessionsManager> session_manager{std::make_shared<SessionsManager>()};

@@ -1,15 +1,9 @@
 #include "InitSessionMessage.hpp"
 #include "ClientSession.hpp"
 
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
 #include <spdlog/spdlog.h>
-#include <fmt/format.h>
 
 #include <iostream>
-
-using boost::asio::ip::tcp;
-
 
 
 int main(int argc, char* argv[]) {
@@ -27,7 +21,7 @@ int main(int argc, char* argv[]) {
     client.send(json.dump());
 
     auto received = client.receive();
-    spdlog::info(received);
+    spdlog::info("Server response: {}", received);
 
     return 0;
 }

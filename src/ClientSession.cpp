@@ -2,31 +2,37 @@
 
 #include <spdlog/spdlog.h>
 
-ClientSession::ClientSession(const std::string &host, unsigned short port) : ClientSession() {
+ClientSession::ClientSession(const std::string &host, unsigned short port) : ClientSession(std::make_unique<boost::asio::io_context>(),
+                                                                                           boost::asio::ssl::context{
+                                                                                                   boost::asio::ssl::context::sslv23}) {
     context.set_default_verify_paths();
     connect(host, port);
 }
 
 ClientSession::ClientSession(const std::string &host, unsigned short port,
-                             const std::string &path_to_cert_authority_file) : ClientSession() {
+                             const std::string &path_to_cert_authority_file) : ClientSession(std::make_unique<boost::asio::io_context>(),
+                                                                                             boost::asio::ssl::context{
+                                                                                                     boost::asio::ssl::context::sslv23}) {
     context.load_verify_file(path_to_cert_authority_file);
     connect(host, port);
 }
 
-ClientSession::ClientSession() : SocketBase({io_context, context}) {
+ClientSession::ClientSession(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context)
+        : SocketBase({*io_context, context}), io_context(std::move(io_context)), context(std::move(context)) {
     socket_.set_verify_mode(boost::asio::ssl::verify_peer);
     socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx) {
         return verify_certificate(preverified, ctx);
     });
 }
 
+
 ClientSession::~ClientSession() {
-    io_context.stop();
+    io_context->stop();
 }
 
 void ClientSession::start() {
     context_thread = std::jthread{[this] {
-        io_context.run();
+        io_context->run();
     }};
 }
 
@@ -39,12 +45,11 @@ bool ClientSession::verify_certificate(bool preverified, boost::asio::ssl::verif
 }
 
 void ClientSession::connect(const std::string &host, unsigned short port) {
-    tcp::resolver resolver(io_context);
+    tcp::resolver resolver(*io_context);
     auto endpoints = resolver.resolve(host, std::to_string(port));
     if (endpoints.empty()) {
         throw SocketException(fmt::format("Did not find {}:{}", host, port));
     }
-    assert(!endpoints.empty());
     socket_.lowest_layer().connect(*endpoints.begin());
     socket_.handshake(boost::asio::ssl::stream_base::client);
 }
