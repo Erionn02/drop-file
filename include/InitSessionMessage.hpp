@@ -13,7 +13,8 @@ public:
 
 class InitSessionMessage {
 public:
-    static nlohmann::json create(const std::string &parsed_test_file_path, const std::string &action);
+    static nlohmann::json createSendMessage(const std::string &parsed_test_file_path);
+    static nlohmann::json createReceiveMessage(const std::string &code);
     static nlohmann::json create(const std::string_view &str);
 
 private:
@@ -21,7 +22,8 @@ private:
     static void validateKeysTypes(const nlohmann::json &json);
     static void validateKeysExist(const nlohmann::json &json);
     static void validateActionKey(const nlohmann::json &json);
-
+    static void validateSingleKeyExists(const nlohmann::json &json, const char *key);
+    static void validateStringKey(const nlohmann::json &json, const char *key);
 public:
     // send
     static inline const char* FILENAME_KEY{"filename"};
@@ -34,10 +36,6 @@ public:
 
     // both
     static inline const char* ACTION_KEY{"action"};
-
-    static void validateSingleKeyExists(const nlohmann::json &json, const char *key);
-
-    static void validateStringKey(const nlohmann::json &json, const char *key);
 };
 
 

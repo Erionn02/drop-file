@@ -3,17 +3,25 @@
 #include <fmt/format.h>
 
 
-nlohmann::json InitSessionMessage::create(const std::string &parsed_test_file_path, const std::string &action) {
+nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_test_file_path) {
     std::filesystem::path file_path{parsed_test_file_path};
     if (!std::filesystem::exists(file_path)) {
         throw std::runtime_error(fmt::format("Given path {} does not exist!", file_path.string()));
     }
+
     nlohmann::json json{};
-    json[ACTION_KEY] = action;
+    json[ACTION_KEY] = "send";
     json[FILENAME_KEY] = file_path.filename();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
     json[FILE_HASH_KEY] = std::filesystem::file_size(file_path); // todo calculate actual file hash
     json[IS_ZIPPED_KEY] = false; //
+    return json;
+}
+
+nlohmann::json InitSessionMessage::createReceiveMessage(const std::string &code) {
+    nlohmann::json json{};
+    json[ACTION_KEY] = "receive";
+    json[CODE_WORDS_KEY] = code;
     return json;
 }
 
