@@ -1,13 +1,13 @@
 #pragma once
 
+#include "DropFileBaseException.hpp"
+
 #include <nlohmann/json.hpp>
 
-#include <stdexcept>
 
-
-class InitSessionMessageException: public std::runtime_error {
+class InitSessionMessageException: public DropFileBaseException {
 public:
-    using std::runtime_error::runtime_error;
+    using DropFileBaseException::DropFileBaseException;
 };
 
 

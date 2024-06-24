@@ -10,12 +10,18 @@ ServerSideClientSession::ServerSideClientSession(tcp::socket socket, asio::ssl::
         : SocketBase({std::move(socket), context}), sessions_manager(std::move(sessions_manager)) {
 }
 
+ServerSideClientSession::~ServerSideClientSession() {
+    spdlog::debug("ServerSideClientSession is being destroyed.");
+}
+
+
 void ServerSideClientSession::start() {
     socket_.handshake(boost::asio::ssl::stream_base::server);
-    socket_.async_read_some(asio::buffer(data_), callback(&ServerSideClientSession::handleFirstRead));
+    socket_.async_read_some(asio::buffer(data_buffer.get(), MAX_FIRST_MESSAGE_SIZE), callback(&ServerSideClientSession::handleFirstRead));
 }
 
 void ServerSideClientSession::disconnect(std::optional<std::string> disconnect_msg) {
+    spdlog::debug("Disconnecting... {}", disconnect_msg.value_or(""));
     if(disconnect_msg.has_value()) {
         socket_.async_write_some(asio::buffer(*disconnect_msg), callback(&ServerSideClientSession::disconnectWriteCallback));
     } else {
@@ -29,44 +35,49 @@ void ServerSideClientSession::disconnectWriteCallback(error_code, size_t) {
 
 void ServerSideClientSession::handleFirstRead(error_code error, size_t bytes_transferred)  {
     if (!error) {
-        std::string_view content {data_.data(), bytes_transferred};
-        spdlog::debug(content);
         try {
+            spdlog::debug("[ServerSideClientSession] Extracting content...");
+            std::string_view content = extractContent(bytes_transferred);
+            spdlog::debug("[ServerSideClientSession] Extracting json...");
             nlohmann::json json = InitSessionMessage::create(content);
+            spdlog::debug("[ServerSideClientSession] Registering session...");
             registerSession(json);
-        } catch (const InitSessionMessageException& e) {
-            disconnect(e.what());
-        } catch (const SessionsManagerException& e) {
+            spdlog::debug("[ServerSideClientSession] Session registered.");
+        } catch (const DropFileBaseException& e) {
             disconnect(e.what());
         }
     }
+}
+
+std::string_view ServerSideClientSession::extractContent(size_t bytes_transferred) const {
+    if (bytes_transferred < sizeof(MSG_HEADER_t)) {
+        throw ServerSideClientSessionException("Not enough bytes were transferred to read message header, aborting...");
+    }
+    MSG_HEADER_t message_bytes{*std::bit_cast<MSG_HEADER_t*>(data_buffer.get())};
+    if (message_bytes > MAX_FIRST_MESSAGE_SIZE - sizeof(MSG_HEADER_t)) {
+        throw ServerSideClientSessionException(fmt::format("Declared message size {} exceeds limit ({}), aborting...", message_bytes, MAX_FIRST_MESSAGE_SIZE));
+    }
+    std::size_t rest_of_message = bytes_transferred - sizeof(MSG_HEADER_t);
+    if (rest_of_message != message_bytes) {
+        throw ServerSideClientSessionException("Not enough bytes were transferred to read message, aborting...");
+    }
+    auto data_ptr = data_buffer.get() + sizeof(MSG_HEADER_t);
+    std::string_view content {data_ptr, rest_of_message};
+    spdlog::debug(content);
+    return content;
 }
 
 void ServerSideClientSession::registerSession(const nlohmann::json &json) {
     if (auto manager = sessions_manager.lock()) {
         if (json[InitSessionMessage::ACTION_KEY] == "send") {
-            std::string session_code = manager->registerSession(shared_from_this());
-            socket_.write_some(asio::buffer(fmt::format("Enter on another device: 'drop-file receive {}'", session_code)));
+            std::string session_code = manager->registerSender(shared_from_this());
+            send(fmt::format("Enter on another device: 'drop-file receive {}'", session_code));
         } else {
             std::string code_words_key = json[InitSessionMessage::CODE_WORDS_KEY];
-            manager->addReceiver(code_words_key, shared_from_this());
+            auto sender = manager->getSender(code_words_key);
+            // todo handle data exchange
         }
-        socket_.async_read_some(asio::buffer(data_), callback(&ServerSideClientSession::handleRead));
     } else {
         disconnect("Internal error"); // should not ever happen
-    }
-}
-
-void ServerSideClientSession::handleRead(error_code error, size_t bytes_transferred) {
-    if (!error) {
-        spdlog::info(std::string_view(data_.data(), bytes_transferred));
-        socket_.async_write_some(asio::buffer(std::string("ok")), callback(&ServerSideClientSession::handleWrite));
-    }
-}
-
-void ServerSideClientSession::handleWrite(error_code ec, std::size_t bytes_transferred) {
-    if (!ec) {
-        spdlog::info(std::string_view(data_.data(), bytes_transferred));
-        socket_.async_read_some(asio::buffer(data_), callback(&ServerSideClientSession::handleRead));
     }
 }

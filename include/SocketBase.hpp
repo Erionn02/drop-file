@@ -14,7 +14,8 @@ public:
 class SocketBase {
 public:
     SocketBase(boost::asio::ssl::stream<tcp::socket> socket_);
-    void send(const std::string& data);
+    void send(const std::string_view &data);
+    void send(const std::string &data);
     bool isAnyMessageWaiting();
     std::string receive();
 protected:
@@ -22,8 +23,8 @@ protected:
 
     boost::asio::ssl::stream<tcp::socket> socket_;
     using MSG_HEADER_t = std::size_t;
-    std::array<char, 1024> data_;
-    static constexpr MSG_HEADER_t MAX_MSG_SIZE{1024 * 1024 * 3}; // 3 MiB
+    std::unique_ptr<char[]> data_buffer;
+    static constexpr MSG_HEADER_t MAX_MSG_SIZE{1024 * 1024 * 1}; // 1 MiB
 };
 
 

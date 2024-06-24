@@ -1,5 +1,7 @@
 #pragma once
 
+#include "DropFileBaseException.hpp"
+
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -8,24 +10,21 @@
 
 class ServerSideClientSession;
 
-class SessionsManagerException: public std::runtime_error {
+class SessionsManagerException: public DropFileBaseException {
 public:
-    using std::runtime_error::runtime_error;
+    using DropFileBaseException::DropFileBaseException;
 };
 
-struct FileExchangeSession {
-    std::shared_ptr<ServerSideClientSession> sender;
-    std::shared_ptr<ServerSideClientSession> receiver;
-};
 
 class SessionsManager {
 public:
-    std::string registerSession(std::shared_ptr<ServerSideClientSession> sender);
-    void addReceiver(const std::string& session_code, std::shared_ptr<ServerSideClientSession> receiver);
+    std::string registerSender(std::shared_ptr<ServerSideClientSession> sender);
+    std::shared_ptr<ServerSideClientSession> getSender(const std::string& session_code);
 private:
-    std::string generateSessionID();
+    std::string generateSessionID(std::size_t length);
 
 
     std::mutex m;
-    std::unordered_map<std::string, FileExchangeSession> sessions;
+    std::unordered_map<std::string, std::shared_ptr<ServerSideClientSession>> senders_sessions;
+    static constexpr std::size_t SESSION_ID_LENGTH{10};
 };
