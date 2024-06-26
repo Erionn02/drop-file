@@ -20,17 +20,17 @@ using boost::system::error_code;
 
 class SessionsManager;
 
-class ServerSideClientSession: public SocketBase, public std::enable_shared_from_this<ServerSideClientSession> {
+class ServerSideClientSession: public SocketBase {
 public:
     ServerSideClientSession(tcp::socket socket, boost::asio::ssl::context &context, std::weak_ptr<SessionsManager> sessions_manager);
     ~ServerSideClientSession();
     void start();
-    void disconnect(std::optional<std::string> disconnect_msg);
 private:
-    template <typename PMF> auto callback(PMF pmf) { return std::bind(pmf, shared_from_this(), _1, _2); }
+    using PMF =  void (ServerSideClientSession::*)(std::string_view);
+    MessageHandler callback(PMF pmf);
+
     void registerSession(nlohmann::json json);
-    std::string_view extractContent(size_t bytes_transferred) const;
-    void handleFirstRead(error_code error, size_t bytes_transferred);
+    void handleFirstRead(std::string_view content);
     void receiveFile(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json session_metadata);
 
 

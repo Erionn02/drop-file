@@ -10,11 +10,10 @@
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
 
-    (void) argv;
     std::string parsed_test_file_path{"/home/kuba/send_test_file.txt"};
 
     ClientSession client("localhost", 12345, "/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
-    client.start();
+
     spdlog::debug("Client started.");
     if (argc == 1) {
         nlohmann::json message_json = InitSessionMessage::createSendMessage(parsed_test_file_path);
@@ -41,11 +40,11 @@ int main(int argc, char *argv[]) {
         std::cin >> confirmation;
         if (confirmation != 'y') {
             spdlog::info("Entered {} aborting.", confirmation);
-            client.SocketBase::send(std::string_view{"abort"});
+            client.SocketBase::send("abort");
             return 1;
         }
         spdlog::info("Sending confirmation...");
-        client.SocketBase::send(std::string_view{"ok"});
+        client.SocketBase::send("ok");
         auto json = nlohmann::json::parse(received);
         std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
 

@@ -8,6 +8,7 @@ ClientSession::ClientSession(const std::string &host, unsigned short port) : Cli
                 boost::asio::ssl::context::sslv23}) {
     context.set_default_verify_paths();
     connect(host, port);
+    start();
 }
 
 ClientSession::ClientSession(const std::string &host, unsigned short port,
@@ -46,24 +47,14 @@ bool ClientSession::verify_certificate(bool preverified, boost::asio::ssl::verif
     return preverified;
 }
 
-void ClientSession::connect(const std::string &host, unsigned short port) {
-    tcp::resolver resolver(*io_context);
-    auto endpoints = resolver.resolve(host, std::to_string(port));
-    if (endpoints.empty()) {
-        throw SocketException(fmt::format("Did not find {}:{}", host, port));
-    }
-    socket_.lowest_layer().connect(*endpoints.begin());
-    socket_.handshake(boost::asio::ssl::stream_base::client);
-}
-
 void ClientSession::send(std::ifstream data_source) {
     std::streamsize bytes_read;
     do {
-        bytes_read = data_source.readsome(data_buffer.get(), static_cast<std::streamsize>(MAX_MSG_SIZE));
+        bytes_read = data_source.readsome(data_buffer.get(), static_cast<std::streamsize>(BUFFER_SIZE));
         spdlog::debug("Bytes read: {}", bytes_read);
         if (bytes_read > 0) {
             SocketBase::send(std::string_view{data_buffer.get(), static_cast<std::size_t>(bytes_read)});
-            auto msg = SocketBase::receive();
+            auto msg = SocketBase::receiveToBuffer();
             if (msg != "ok") {
                 spdlog::error("Error from server: {}", msg);
                 break;
@@ -75,7 +66,7 @@ void ClientSession::send(std::ifstream data_source) {
 void ClientSession::receive(std::ofstream &data_sink, std::size_t expected_bytes) {
     std::size_t total_transferred_bytes{0};
     while (total_transferred_bytes < expected_bytes) {
-        std::string data = SocketBase::receive();
+        std::string_view data = SocketBase::receiveToBuffer();
         spdlog::debug("Received {} bytes chunk", data.size());
         std::size_t left_to_transfer = expected_bytes - total_transferred_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
