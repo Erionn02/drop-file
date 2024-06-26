@@ -28,10 +28,10 @@ public:
     void disconnect(std::optional<std::string> disconnect_msg);
 private:
     template <typename PMF> auto callback(PMF pmf) { return std::bind(pmf, shared_from_this(), _1, _2); }
-    void registerSession(const nlohmann::json &json);
-    void disconnectWriteCallback(error_code, size_t);
+    void registerSession(nlohmann::json json);
     std::string_view extractContent(size_t bytes_transferred) const;
     void handleFirstRead(error_code error, size_t bytes_transferred);
+    void receiveFile(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json session_metadata);
 
 
     std::weak_ptr<SessionsManager> sessions_manager;

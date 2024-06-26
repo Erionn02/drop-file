@@ -21,8 +21,9 @@ public:
 protected:
     void sendChunk(std::string_view data);
 
-    boost::asio::ssl::stream<tcp::socket> socket_;
     using MSG_HEADER_t = std::size_t;
+
+    boost::asio::ssl::stream<tcp::socket> socket_;
     std::unique_ptr<char[]> data_buffer;
     static constexpr MSG_HEADER_t MAX_MSG_SIZE{1024 * 1024 * 1}; // 1 MiB
 };

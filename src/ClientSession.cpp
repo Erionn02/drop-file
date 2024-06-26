@@ -60,6 +60,7 @@ void ClientSession::send(std::ifstream data_source) {
     std::streamsize bytes_read;
     do {
         bytes_read = data_source.readsome(data_buffer.get(), static_cast<std::streamsize>(MAX_MSG_SIZE));
+        spdlog::debug("Bytes read: {}", bytes_read);
         if (bytes_read > 0) {
             SocketBase::send(std::string_view{data_buffer.get(), static_cast<std::size_t>(bytes_read)});
             auto msg = SocketBase::receive();
@@ -68,13 +69,14 @@ void ClientSession::send(std::ifstream data_source) {
                 break;
             }
         }
-    } while (bytes_read != -1);
+    } while (bytes_read > 0);
 }
 
 void ClientSession::receive(std::ofstream &data_sink, std::size_t expected_bytes) {
     std::size_t total_transferred_bytes{0};
     while (total_transferred_bytes < expected_bytes) {
         std::string data = SocketBase::receive();
+        spdlog::debug("Received {} bytes chunk", data.size());
         std::size_t left_to_transfer = expected_bytes - total_transferred_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
         data_sink.write(data.data(), static_cast<std::streamsize>(write_size));

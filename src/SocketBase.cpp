@@ -4,7 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
-SocketBase::SocketBase(boost::asio::ssl::stream<tcp::socket> socket_) : socket_(std::move(socket_)), data_buffer(std::make_unique<char[]>(MAX_MSG_SIZE)) {
+SocketBase::SocketBase(boost::asio::ssl::stream<tcp::socket> socket_) : socket_(std::move(socket_)), data_buffer(
+        std::make_unique<char[]>(MAX_MSG_SIZE)) {
 
 }
 
@@ -27,10 +28,11 @@ void SocketBase::sendChunk(std::string_view data) {
     std::vector<boost::asio::const_buffer> message{};
     message.emplace_back(boost::asio::buffer(&message_length, sizeof(message_length)));
     message.push_back(boost::asio::buffer(data));
-    boost::asio::write(socket_,message);
+    boost::asio::write(socket_, message);
 }
 
 std::string SocketBase::receive() {
+    spdlog::debug("SocketBase::receive");
     MSG_HEADER_t message_length{};
     boost::asio::mutable_buffer buffer{&message_length, sizeof(message_length)};
     boost::asio::read(socket_, buffer, boost::asio::transfer_exactly(buffer.size()));
