@@ -53,12 +53,8 @@ void ClientSession::send(std::ifstream data_source) {
         bytes_read = data_source.readsome(data_buffer.get(), static_cast<std::streamsize>(BUFFER_SIZE));
         spdlog::debug("Bytes read: {}", bytes_read);
         if (bytes_read > 0) {
-            SocketBase::send(std::string_view{data_buffer.get(), static_cast<std::size_t>(bytes_read)});
-            auto msg = SocketBase::receiveToBuffer();
-            if (msg != "ok") {
-                spdlog::error("Error from server: {}", msg);
-                break;
-            }
+            SocketBase::send({data_buffer.get(), static_cast<std::size_t>(bytes_read)});
+            SocketBase::receiveACK();
         }
     } while (bytes_read > 0);
 }
@@ -72,6 +68,6 @@ void ClientSession::receive(std::ofstream &data_sink, std::size_t expected_bytes
         std::size_t write_size = std::min(left_to_transfer, data.size());
         data_sink.write(data.data(), static_cast<std::streamsize>(write_size));
         total_transferred_bytes += write_size;
-        SocketBase::send(std::string_view{"ok"});
+        SocketBase::sendACK();
     }
 }

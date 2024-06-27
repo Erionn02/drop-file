@@ -52,14 +52,10 @@ void ServerSideClientSession::registerSession(nlohmann::json json) {
 void
 ServerSideClientSession::receiveFile(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json session_metadata) {
     SocketBase::send(session_metadata.dump());
-    auto response = SocketBase::receive();
+    SocketBase::receiveACK();
 
-    if (response != "ok") {
-        spdlog::info("Not ok response: {}", response);
-        return;
-    }
+    sender->sendACK();
 
-    sender->send("ok");
     std::size_t total_received_bytes{0};
     std::size_t expected_bytes = session_metadata[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
     while (total_received_bytes < expected_bytes) {
@@ -67,13 +63,10 @@ ServerSideClientSession::receiveFile(std::shared_ptr<ServerSideClientSession> se
         std::size_t left_to_transfer = expected_bytes - total_received_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
         SocketBase::send(std::string_view{data.data(), write_size});
-        response = SocketBase::receive();
-        if (response != "ok") {
-            spdlog::info("Not ok response: {}", response);
-            return;
-        }
+        SocketBase::receiveACK();
+
         total_received_bytes += write_size;
-        sender->send("ok");
+        sender->sendACK();
     }
 }
 

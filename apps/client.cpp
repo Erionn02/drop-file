@@ -22,12 +22,9 @@ int main(int argc, char *argv[]) {
         std::string received_msg = client.SocketBase::receive();
         spdlog::info("Server response: {}", received_msg);
         spdlog::info("Waiting for client to confirm");
-        received_msg = client.SocketBase::receive();
-        spdlog::info("Response: {}", received_msg);
-        if (received_msg == "ok") {
-            std::ifstream file{parsed_test_file_path};
-            client.send(std::move(file));
-        }
+        client.SocketBase::receiveACK();
+        std::ifstream file{parsed_test_file_path};
+        client.send(std::move(file));
     } else {
         nlohmann::json message_json = InitSessionMessage::createReceiveMessage(argv[1]);
         client.SocketBase::send(message_json.dump());
@@ -44,7 +41,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         spdlog::info("Sending confirmation...");
-        client.SocketBase::send("ok");
+        client.SocketBase::sendACK();
         auto json = nlohmann::json::parse(received);
         std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
 

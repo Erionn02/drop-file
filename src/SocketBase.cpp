@@ -87,9 +87,13 @@ void SocketBase::asyncReadMessage(std::size_t max_msg_size, MessageHandler messa
                 fmt::format("Tried to schedule receiving message with max size of {} bytes, where buffer size is {}.",
                             max_msg_size, BUFFER_SIZE));
     }
+    asyncReadHeader(max_msg_size, std::move(message_handler));
+}
+
+void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler message_handler) {
     constexpr std::size_t HEADER_SIZE = sizeof(MSG_HEADER_t);
     boost::asio::async_read(socket_, asio::buffer(data_buffer.get(), HEADER_SIZE),
-                            boost::asio::transfer_exactly(HEADER_SIZE),
+                            asio::transfer_exactly(HEADER_SIZE),
                             [this, self = shared_from_this(), max_msg_size, message_handler = std::move(
                                     message_handler)](error_code ec, std::size_t) mutable {
                                 if (!ec) {
@@ -100,23 +104,46 @@ void SocketBase::asyncReadMessage(std::size_t max_msg_size, MessageHandler messa
                                                 message_size, max_msg_size);
                                         return;
                                     }
-                                    boost::asio::async_read(socket_, asio::buffer(data_buffer.get(), message_size),
-                                                            boost::asio::transfer_exactly(message_size),
-                                                            [self = std::move(self), message_handler = std::move(
-                                                                    message_handler), this](error_code ec,
-                                                                                            std::size_t message_size) {
-                                                                if (!ec) {
-                                                                    message_handler(std::string_view{data_buffer.get(),
-                                                                                                     message_size});
-                                                                } else {
-                                                                    spdlog::debug(
-                                                                            "Encountered an error during async read, aborting. Details: {}",
-                                                                            ec.what());
-                                                                }
-                                                            });
+                                    asyncReadMessageImpl(std::move(self), std::move(message_handler), message_size);
                                 } else {
                                     spdlog::debug("Encountered an error during async read, aborting. Details: {}",
                                                   ec.what());
                                 }
                             });
+}
+
+void
+SocketBase::asyncReadMessageImpl(std::shared_ptr<SocketBase> self, std::function<void(std::string_view)> message_handler,
+                                 unsigned long message_size) {
+    boost::asio::async_read(socket_, asio::buffer(data_buffer.get(), message_size),
+                            asio::transfer_exactly(message_size),
+                            [self = std::move(self), message_handler = std::move(
+                                    message_handler), this](error_code ec,
+                                                            std::size_t message_size) {
+                                if (!ec) {
+                                    message_handler(std::string_view{data_buffer.get(),
+                                                                     message_size});
+                                } else {
+                                    spdlog::debug(
+                                            "Encountered an error during async read, aborting. Details: {}",
+                                            ec.what());
+                                }
+                            });
+}
+
+void SocketBase::receiveACK() {
+    auto response = receiveToBuffer();
+    if (response != SocketBase::ACK) {
+        std::string_view additional_message;
+        if (response.size() < 100) {
+            additional_message = response;
+        } else {
+            additional_message = "Too large to print.";
+        }
+        throw SocketException(fmt::format("Response not ok. Response size: {}. {}", response.size(), additional_message));
+    }
+}
+
+void SocketBase::sendACK() {
+    send(SocketBase::ACK);
 }
