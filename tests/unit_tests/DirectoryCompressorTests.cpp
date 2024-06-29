@@ -83,3 +83,17 @@ TEST_F(DirectoryCompressorTests, canCompressAndDecompress) {
     ASSERT_TRUE(fs::exists(output_dir_path));
     assertDirectoriesEqual(input_dir_path, output_dir_path);
 }
+
+TEST_F(DirectoryCompressorTests, canCompressAndDecompressEmptyDir) {
+    std::filesystem::create_directories(input_dir_path);
+
+    DirectoryCompressor dc1{input_dir_path};
+    dc1.compress(archive_path);
+
+    DirectoryCompressor dc2{output_dir_path};
+    dc2.decompress(archive_path);
+
+    ASSERT_TRUE(fs::exists(archive_path));
+    ASSERT_TRUE(fs::exists(output_dir_path));
+    assertDirectoriesEqual(input_dir_path, output_dir_path);
+}
