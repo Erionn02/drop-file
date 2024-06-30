@@ -13,7 +13,7 @@ SocketBase::SocketBase(boost::asio::ssl::stream<tcp::socket> socket_) : socket_(
                                                                                         BUFFER_SIZE)) {}
 
 void SocketBase::send(std::string_view data) {
-    spdlog::debug("SocketBase::sendFile {}", data);
+    spdlog::debug("SocketBase::send {}", data);
     MSG_HEADER_t message_length = data.size();
     MSG_HEADER_t ptr_cursor = 0;
     while (message_length >= BUFFER_SIZE) {
@@ -43,7 +43,7 @@ void SocketBase::disconnect(std::optional<std::string> disconnect_msg) {
 }
 
 std::string SocketBase::receive() {
-    spdlog::debug("SocketBase::receiveFile");
+    spdlog::debug("SocketBase::receive");
     MSG_HEADER_t message_length = getMessageLength();
     std::string message{};
     message.resize(message_length);
@@ -58,7 +58,7 @@ std::size_t SocketBase::getMessageLength() {
     spdlog::debug("Receive message length: {}", message_length);
     if (message_length > BUFFER_SIZE) {
         throw SocketException(
-                fmt::format("Somebody is trying to sendFile {} bytes in single message, which is more than allowed ({})",
+                fmt::format("Somebody is trying to send {} bytes in single message, which is more than allowed ({})",
                             message_length, BUFFER_SIZE));
     }
     return message_length;
@@ -90,7 +90,7 @@ void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler
                                     MSG_HEADER_t message_size = *std::bit_cast<MSG_HEADER_t *>(data_buffer.get());
                                     if (message_size > max_msg_size) {
                                         spdlog::info(
-                                                "Somebody tried to sendFile {} bytes, which is more than allowed ({}) for this callback.",
+                                                "Somebody tried to send {} bytes, which is more than allowed ({}) for this callback.",
                                                 message_size, max_msg_size);
                                         return;
                                     }

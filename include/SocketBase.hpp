@@ -15,7 +15,7 @@ public:
 };
 
 
-// Every message is preceded by header that contains amount of bytes to sendFile
+// Every message is preceded by header that contains amount of bytes to send
 class SocketBase : public std::enable_shared_from_this<SocketBase> {
 public:
     SocketBase(boost::asio::ssl::stream<tcp::socket> socket_);

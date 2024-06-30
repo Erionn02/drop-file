@@ -9,10 +9,10 @@ ClientArgs parseArgs(int argc, char **argv) {
     program.add_argument("action")
             .nargs(1)
             .required()
-            .help("Type of operation: sendFile or receiveFile")
+            .help("Type of operation: send or receive")
             .action([](const std::string& value) {
-                if(value != "sendFile" && value != "receiveFile") {
-                    throw std::runtime_error(fmt::format(""));
+                if(value != "send" && value != "receive") {
+                    throw std::runtime_error(fmt::format("Incorrect value of action argument: {}. Expected send or receive.", value));
                 }
                 return value;
             });
@@ -20,7 +20,7 @@ ClientArgs parseArgs(int argc, char **argv) {
     program.add_argument("file_or_code")
             .nargs(1)
             .required()
-            .help("Either path to file to sendFile or code words to receiveFile file.");
+            .help("Either path to file to send or code words to receive file.");
 
 
     try {
@@ -34,7 +34,7 @@ ClientArgs parseArgs(int argc, char **argv) {
     auto action = program.get<std::string>("action");
     auto file_or_code = program.get<std::string>("file_or_code");
 
-    if (action == "sendFile") {
+    if (action == "send") {
         return {.action = Action::send,
                 .file_to_send_path = file_or_code};
     } else {

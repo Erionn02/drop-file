@@ -40,7 +40,9 @@ void ClientSocket::connect(const std::string &host, unsigned short port) {
 
 
 ClientSocket::~ClientSocket() {
-    io_context->stop();
+    if (io_context) {
+        io_context->stop();
+    }
 }
 
 void ClientSocket::start() {

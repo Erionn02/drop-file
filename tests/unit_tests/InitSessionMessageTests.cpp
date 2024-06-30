@@ -24,19 +24,19 @@ TEST_F(DropFileServerIntegrationTests, throwsOnJsonWithActionKeyNotAString) {
 
 TEST_F(DropFileServerIntegrationTests, throwsOnActionKeyAStringButUnexpectedOne) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "Not 'sendFile' or 'receiveFile'";
+    json[InitSessionMessage::ACTION_KEY] = "Not 'send' or 'receive'";
     ASSERT_THROW(InitSessionMessage::create(json.dump()), InitSessionMessageException);
 }
 
 TEST_F(DropFileServerIntegrationTests, throwsOnActionKeySendButMissingOthers) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "sendFile";
+    json[InitSessionMessage::ACTION_KEY] = "send";
     ASSERT_THROW(InitSessionMessage::create(json.dump()), InitSessionMessageException);
 }
 
 TEST_F(DropFileServerIntegrationTests, throwsOnSendActionButOtherKeysHaveWrongType) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "sendFile";
+    json[InitSessionMessage::ACTION_KEY] = "send";
     for (auto key: {InitSessionMessage::FILENAME_KEY, InitSessionMessage::FILE_SIZE_KEY,
                     InitSessionMessage::FILE_HASH_KEY, InitSessionMessage::IS_ZIPPED_KEY}) {
         json[key] = key;
@@ -46,7 +46,7 @@ TEST_F(DropFileServerIntegrationTests, throwsOnSendActionButOtherKeysHaveWrongTy
 
 TEST_F(DropFileServerIntegrationTests, doesNotThrowOnJsonWithExpectedStructure) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "sendFile";
+    json[InitSessionMessage::ACTION_KEY] = "send";
     json[InitSessionMessage::FILENAME_KEY] = "example_filename.txt";
     json[InitSessionMessage::IS_ZIPPED_KEY] = true;
     json[InitSessionMessage::FILE_SIZE_KEY] = 12345;
@@ -57,7 +57,7 @@ TEST_F(DropFileServerIntegrationTests, doesNotThrowOnJsonWithExpectedStructure) 
 
 TEST_F(DropFileServerIntegrationTests, ignoresOtherAdditionalUnrecognizedKeys) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "sendFile";
+    json[InitSessionMessage::ACTION_KEY] = "send";
     json[InitSessionMessage::FILENAME_KEY] = "example_filename.txt";
     json[InitSessionMessage::IS_ZIPPED_KEY] = true;
     json[InitSessionMessage::FILE_SIZE_KEY] = 12345;
@@ -69,27 +69,27 @@ TEST_F(DropFileServerIntegrationTests, ignoresOtherAdditionalUnrecognizedKeys) {
 
 TEST_F(DropFileServerIntegrationTests, throwsOnActionKeyReceiveButMissingCodeWordsKey) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "receiveFile";
+    json[InitSessionMessage::ACTION_KEY] = "receive";
     ASSERT_THROW(InitSessionMessage::create(json.dump()), InitSessionMessageException);
 }
 
 TEST_F(DropFileServerIntegrationTests, throwsOnCodeWordsKeyIncorrectType) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "receiveFile";
+    json[InitSessionMessage::ACTION_KEY] = "receive";
     json[InitSessionMessage::CODE_WORDS_KEY] = 123456789;
     ASSERT_THROW(InitSessionMessage::create(json.dump()), InitSessionMessageException);
 }
 
 TEST_F(DropFileServerIntegrationTests, doesNotThrowOnCorrectReceiveJson) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "receiveFile";
+    json[InitSessionMessage::ACTION_KEY] = "receive";
     json[InitSessionMessage::CODE_WORDS_KEY] = "super-drop-file-program";
     ASSERT_NO_THROW(InitSessionMessage::create(json.dump()));
 }
 
 TEST_F(DropFileServerIntegrationTests, ignoredAdditionalKeys) {
     nlohmann::json json{};
-    json[InitSessionMessage::ACTION_KEY] = "receiveFile";
+    json[InitSessionMessage::ACTION_KEY] = "receive";
     json[InitSessionMessage::CODE_WORDS_KEY] = "super-drop-file-program";
     json["Additional unrecognized key"] = true;
     ASSERT_NO_THROW(InitSessionMessage::create(json.dump()));

@@ -25,13 +25,13 @@ private:
     static void validateSingleKeyExists(const nlohmann::json &json, const char *key);
     static void validateStringKey(const nlohmann::json &json, const char *key);
 public:
-    // sendFile
+    // send
     static inline const char* FILENAME_KEY{"filename"};
     static inline const char* FILE_SIZE_KEY{"file_size"};
     static inline const char* FILE_HASH_KEY{"file_hash"};
     static inline const char* IS_ZIPPED_KEY{"is_zipped"};
 
-    // receiveFile
+    // receive
     static inline const char* CODE_WORDS_KEY{"code_words_key"};
 
     // both

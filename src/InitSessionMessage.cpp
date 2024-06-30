@@ -10,7 +10,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_t
     }
 
     nlohmann::json json{};
-    json[ACTION_KEY] = "sendFile";
+    json[ACTION_KEY] = "send";
     json[FILENAME_KEY] = file_path.filename();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
     json[FILE_HASH_KEY] = std::filesystem::file_size(file_path); // todo calculate actual file hash
@@ -20,7 +20,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_t
 
 nlohmann::json InitSessionMessage::createReceiveMessage(const std::string &code) {
     nlohmann::json json{};
-    json[ACTION_KEY] = "receiveFile";
+    json[ACTION_KEY] = "receive";
     json[CODE_WORDS_KEY] = code;
     return json;
 }
@@ -37,7 +37,7 @@ nlohmann::json InitSessionMessage::create(const std::string_view &str) {
 
 void InitSessionMessage::validate(const nlohmann::json &json) {
     validateActionKey(json);
-    if (json[ACTION_KEY] == "sendFile") {
+    if (json[ACTION_KEY] == "send") {
         validateKeysExist(json);
         validateKeysTypes(json);
     } else {
@@ -49,7 +49,7 @@ void InitSessionMessage::validate(const nlohmann::json &json) {
 void InitSessionMessage::validateActionKey(const nlohmann::json &json) {
     validateSingleKeyExists(json, ACTION_KEY);
     validateStringKey(json, ACTION_KEY);
-    if (json[ACTION_KEY] != "sendFile" && json[ACTION_KEY] != "receiveFile") {
+    if (json[ACTION_KEY] != "send" && json[ACTION_KEY] != "receive") {
         throw InitSessionMessageException(
                 fmt::format("InitSessionMessage {} key has unrecognized value: {}.", ACTION_KEY,
                             json[ACTION_KEY].get<std::string>()));
