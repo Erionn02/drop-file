@@ -15,16 +15,17 @@ public:
 };
 
 
-// Every message is preceded by header that contains amount of bytes to send
+// Every message is preceded by header that contains amount of bytes to sendFile
 class SocketBase : public std::enable_shared_from_this<SocketBase> {
 public:
     SocketBase(boost::asio::ssl::stream<tcp::socket> socket_);
+    SocketBase(SocketBase&&) = default;
+
     virtual ~SocketBase() = default;
 
     using MessageHandler = std::function<void(std::string_view)>;
     void asyncReadMessage(std::size_t max_message_size, MessageHandler message_handler);
     void disconnect(std::optional<std::string> disconnect_msg);
-    void connect(const std::string &host, unsigned short port);
 
     void send(std::string_view data);
     std::string receive();
@@ -32,6 +33,8 @@ public:
 
     void receiveACK();
     void sendACK();
+
+    std::pair<char*, std::size_t> getBuffer();
 protected:
     void sendChunk(std::string_view data);
     std::size_t getMessageLength() ;

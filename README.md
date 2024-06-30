@@ -2,8 +2,8 @@
 
 ## Requirements:
 1) DropFileServer should expose only one port. -> Done
-2) DropFileServer should be a proxy only, clients should not talk to each other.
-3) DropFileServer should not store any intermediate files and use RAM only.
+2) DropFileServer should be a proxy only, clients should not talk to each other. -> Done
+3) DropFileServer should not store any intermediate files and use RAM only. -> Done
 4) Whole communication should be encrypted. -> Done
 5) Communication is 3 phase:
 

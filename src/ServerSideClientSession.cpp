@@ -36,9 +36,9 @@ void ServerSideClientSession::handleFirstRead(std::string_view content) {
 
 void ServerSideClientSession::registerSession(nlohmann::json json) {
     if (auto manager = sessions_manager.lock()) {
-        if (json[InitSessionMessage::ACTION_KEY] == "send") {
+        if (json[InitSessionMessage::ACTION_KEY] == "sendFile") {
             std::string session_code = manager->registerSender(std::static_pointer_cast<ServerSideClientSession>(shared_from_this()), std::move(json));
-            send(fmt::format("Enter on another device: 'drop-file receive {}'", session_code));
+            send(fmt::format("Enter on another device: 'drop-file receiveFile {}'", session_code));
         } else {
             std::string code_words_key = json[InitSessionMessage::CODE_WORDS_KEY];
             auto [sender, session_metadata] = manager->getSenderWithMetadata(code_words_key);

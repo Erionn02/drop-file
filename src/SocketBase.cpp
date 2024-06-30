@@ -13,7 +13,7 @@ SocketBase::SocketBase(boost::asio::ssl::stream<tcp::socket> socket_) : socket_(
                                                                                         BUFFER_SIZE)) {}
 
 void SocketBase::send(std::string_view data) {
-    spdlog::debug("SocketBase::send {}", data);
+    spdlog::debug("SocketBase::sendFile {}", data);
     MSG_HEADER_t message_length = data.size();
     MSG_HEADER_t ptr_cursor = 0;
     while (message_length >= BUFFER_SIZE) {
@@ -34,16 +34,6 @@ void SocketBase::sendChunk(std::string_view data) {
     boost::asio::write(socket_, message);
 }
 
-void SocketBase::connect(const std::string &host, unsigned short port) {
-    tcp::resolver resolver(socket_.get_executor());
-    auto endpoints = resolver.resolve(host, std::to_string(port));
-    if (endpoints.empty()) {
-        throw SocketException(fmt::format("Did not find {}:{}", host, port));
-    }
-    socket_.lowest_layer().connect(*endpoints.begin());
-    socket_.handshake(boost::asio::ssl::stream_base::client);
-}
-
 void SocketBase::disconnect(std::optional<std::string> disconnect_msg) {
     spdlog::debug("Disconnecting... {}", disconnect_msg.value_or(""));
     if (disconnect_msg.has_value()) {
@@ -53,7 +43,7 @@ void SocketBase::disconnect(std::optional<std::string> disconnect_msg) {
 }
 
 std::string SocketBase::receive() {
-    spdlog::debug("SocketBase::receive");
+    spdlog::debug("SocketBase::receiveFile");
     MSG_HEADER_t message_length = getMessageLength();
     std::string message{};
     message.resize(message_length);
@@ -68,7 +58,7 @@ std::size_t SocketBase::getMessageLength() {
     spdlog::debug("Receive message length: {}", message_length);
     if (message_length > BUFFER_SIZE) {
         throw SocketException(
-                fmt::format("Somebody is trying to send {} bytes in single message, which is more than allowed ({})",
+                fmt::format("Somebody is trying to sendFile {} bytes in single message, which is more than allowed ({})",
                             message_length, BUFFER_SIZE));
     }
     return message_length;
@@ -100,7 +90,7 @@ void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler
                                     MSG_HEADER_t message_size = *std::bit_cast<MSG_HEADER_t *>(data_buffer.get());
                                     if (message_size > max_msg_size) {
                                         spdlog::info(
-                                                "Somebody tried to send {} bytes, which is more than allowed ({}) for this callback.",
+                                                "Somebody tried to sendFile {} bytes, which is more than allowed ({}) for this callback.",
                                                 message_size, max_msg_size);
                                         return;
                                     }
@@ -135,7 +125,8 @@ void SocketBase::receiveACK() {
     auto response = receiveToBuffer();
     if (response != SocketBase::ACK) {
         std::string_view additional_message;
-        if (response.size() < 100) {
+        constexpr std::size_t MAX_PRINTABLE_STR_LENGTH{100}; // totally arbitrary number
+        if (response.size() < MAX_PRINTABLE_STR_LENGTH) {
             additional_message = response;
         } else {
             additional_message = "Too large to print.";
@@ -146,4 +137,8 @@ void SocketBase::receiveACK() {
 
 void SocketBase::sendACK() {
     send(SocketBase::ACK);
+}
+
+std::pair<char *, std::size_t> SocketBase::getBuffer() {
+    return {data_buffer.get(), BUFFER_SIZE};
 }

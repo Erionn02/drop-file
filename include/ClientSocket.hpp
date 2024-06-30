@@ -5,15 +5,16 @@
 #include <thread>
 #include <fstream>
 
-class ClientSession : public SocketBase {
+class ClientSocket : public SocketBase {
 public:
-    ClientSession(const std::string& host, unsigned short port);
-    ClientSession(const std::string& host, unsigned short port, const std::string& path_to_cert_authority_file);
-    ~ClientSession();
-    void send(std::ifstream data_source);
-    void receive(std::ofstream& data_sink, std::size_t expected_bytes);
+    ClientSocket(const std::string& host, unsigned short port);
+    ClientSocket(const std::string& host, unsigned short port, const std::string& path_to_cert_authority_file);
+    ClientSocket(ClientSocket&&) = default;
+    ~ClientSocket();
+
+    void connect(const std::string &host, unsigned short port);
 private:
-    ClientSession(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context);
+    ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context);
     bool verify_certificate(bool preverified, boost::asio::ssl::verify_context &ctx);
     void start();
 

@@ -2,4 +2,4 @@
 
 #include "ClientArgs.hpp"
 
-ClientArgs parse(int argc, char* argv[]);
+ClientArgs parseArgs(int argc, char* argv[]);

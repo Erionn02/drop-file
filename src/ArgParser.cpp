@@ -3,15 +3,15 @@
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 
-ClientArgs parse(int argc, char **argv) {
+ClientArgs parseArgs(int argc, char **argv) {
     argparse::ArgumentParser program("drop-file", "1.0.0");
 
     program.add_argument("action")
             .nargs(1)
             .required()
-            .help("Type of operation: send or receive")
+            .help("Type of operation: sendFile or receiveFile")
             .action([](const std::string& value) {
-                if(value != "send" && value != "receive") {
+                if(value != "sendFile" && value != "receiveFile") {
                     throw std::runtime_error(fmt::format(""));
                 }
                 return value;
@@ -20,7 +20,7 @@ ClientArgs parse(int argc, char **argv) {
     program.add_argument("file_or_code")
             .nargs(1)
             .required()
-            .help("Either path to file to send or code words to receive file.");
+            .help("Either path to file to sendFile or code words to receiveFile file.");
 
 
     try {
@@ -34,7 +34,7 @@ ClientArgs parse(int argc, char **argv) {
     auto action = program.get<std::string>("action");
     auto file_or_code = program.get<std::string>("file_or_code");
 
-    if (action == "send") {
+    if (action == "sendFile") {
         return {.action = Action::send,
                 .file_to_send_path = file_or_code};
     } else {
