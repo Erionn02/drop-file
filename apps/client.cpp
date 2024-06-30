@@ -1,5 +1,6 @@
 #include "InitSessionMessage.hpp"
 #include "ClientSession.hpp"
+#include "ArgParser.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -7,26 +8,26 @@
 #include <fstream>
 
 
+
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
-
-    std::string parsed_test_file_path{"/home/kuba/send_test_file.txt"};
+    ClientArgs args = parse(argc, argv);
 
     ClientSession client("localhost", 12345, "/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
 
     spdlog::debug("Client started.");
-    if (argc == 1) {
-        nlohmann::json message_json = InitSessionMessage::createSendMessage(parsed_test_file_path);
+    if (args.action == Action::send) {
+        nlohmann::json message_json = InitSessionMessage::createSendMessage(*args.file_to_send_path);
         client.SocketBase::send(message_json.dump());
         spdlog::info("Message sent.");
         std::string received_msg = client.SocketBase::receive();
         spdlog::info("Server response: {}", received_msg);
         spdlog::info("Waiting for client to confirm");
         client.SocketBase::receiveACK();
-        std::ifstream file{parsed_test_file_path};
+        std::ifstream file{*args.file_to_send_path};
         client.send(std::move(file));
     } else {
-        nlohmann::json message_json = InitSessionMessage::createReceiveMessage(argv[1]);
+        nlohmann::json message_json = InitSessionMessage::createReceiveMessage(*args.receive_code);
         client.SocketBase::send(message_json.dump());
         spdlog::info("Message sent.");
         auto received = client.SocketBase::receive();

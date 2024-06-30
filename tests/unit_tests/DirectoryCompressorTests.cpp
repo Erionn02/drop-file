@@ -37,7 +37,7 @@ struct DirectoryCompressorTests: public Test{
             std::ofstream file{input_dir_path / "nested_dir" / "test_file.txt"};
             file << "Some other content";
         }
-        fs::create_directories(input_dir_path / "another_nested_dir"); // todo add support for empty dirs
+        fs::create_directories(input_dir_path / "another_nested_dir");
     }
 
     void assertDirectoriesEqual(const fs::path& dir1, const fs::path& dir2) {

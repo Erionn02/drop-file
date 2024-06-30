@@ -8,10 +8,10 @@ namespace io = boost::iostreams;
 
 
 
-DirectoryCompressor::DirectoryCompressor(std::filesystem::path directory): directory(std::move(directory)) {}
+DirectoryCompressor::DirectoryCompressor(fs::path directory): directory(std::move(directory)) {}
 
 
-void DirectoryCompressor::decompress(const std::filesystem::path &zip_file_path) {
+void DirectoryCompressor::decompress(const fs::path &zip_file_path) {
     std::ifstream ifs(zip_file_path, std::ios_base::binary);
     io::filtering_streambuf<io::input> in;
     in.push(io::zlib_decompressor());
@@ -22,16 +22,24 @@ void DirectoryCompressor::decompress(const std::filesystem::path &zip_file_path)
 
     std::istringstream archive_input_stream(decompressed_stream.str());
     boost::archive::text_iarchive archive(archive_input_stream);
+    deserializeArchive(archive);
+}
+
+void DirectoryCompressor::deserializeArchive(boost::archive::text_iarchive &archive) {
     while (true) {
         try {
-            FileInfo info;
+            DirEntryInfo info;
             archive >> info;
 
-            fs::path file_path = directory / info.path;
-            fs::create_directories(file_path.parent_path());
+            fs::path path = directory / info.path;
+            if (info.is_directory) {
+                fs::create_directories(path);
+            } else {
+                fs::create_directories(path.parent_path());
 
-            std::ofstream ofs(file_path.string(), std::ios_base::binary);
-            ofs << info.content;
+                std::ofstream ofs(path.string(), std::ios_base::binary);
+                ofs << info.content;
+            }
         } catch (const boost::archive::archive_exception& e) {
             if (e.code == boost::archive::archive_exception::input_stream_error) {
                 break;  // End of archive
@@ -39,9 +47,10 @@ void DirectoryCompressor::decompress(const std::filesystem::path &zip_file_path)
                 throw;
             }
         }
-    }}
+    }
+}
 
-void DirectoryCompressor::compress(const std::filesystem::path &new_zip_file_path) {
+void DirectoryCompressor::compress(const fs::path &new_zip_file_path) {
     std::ofstream ofs(new_zip_file_path, std::ios_base::binary);
     io::filtering_streambuf<io::output> out;
     out.push(io::zlib_compressor());
@@ -57,6 +66,7 @@ void DirectoryCompressor::compress(const std::filesystem::path &new_zip_file_pat
 
 void DirectoryCompressor::compressDirectory(const fs::path &dir_to_compress, boost::archive::text_oarchive &archive,
                                             const fs::path &relative_path) {
+    addDirectoryToArchive(archive, relative_path);
     for (const auto& dir_entry: fs::directory_iterator(dir_to_compress)) {
         const fs::path& current = dir_entry.path();
         fs::path relative = relative_path / current.filename();
@@ -69,11 +79,19 @@ void DirectoryCompressor::compressDirectory(const fs::path &dir_to_compress, boo
     }
 }
 
+void DirectoryCompressor::addDirectoryToArchive(boost::archive::text_oarchive &archive,
+                                                const fs::path &relative_path) const {
+    DirEntryInfo info;
+    info.path = relative_path;
+    info.is_directory = true;
+    archive << info;
+}
+
 void
 DirectoryCompressor::compressFile(boost::archive::text_oarchive &archive, const fs::path &current, const fs::path &relative) const {
-    FileInfo info;
+    DirEntryInfo info;
     info.path = relative.string();
-
+    info.is_directory = false;
     std::ifstream ifs(current.string(), std::ios_base::binary);
     std::stringstream buffer;
     buffer << ifs.rdbuf();

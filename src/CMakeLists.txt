@@ -10,4 +10,5 @@ add_lib(drop-file-shared-lib
         ${CMAKE_CURRENT_SOURCE_DIR}/SessionsManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ClientSession.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/DirectoryCompressor.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArgParser.cpp
         )

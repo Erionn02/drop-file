@@ -14,7 +14,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_t
     json[FILENAME_KEY] = file_path.filename();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
     json[FILE_HASH_KEY] = std::filesystem::file_size(file_path); // todo calculate actual file hash
-    json[IS_ZIPPED_KEY] = false; //
+    json[IS_ZIPPED_KEY] = std::filesystem::is_directory(parsed_test_file_path);
     return json;
 }
 
