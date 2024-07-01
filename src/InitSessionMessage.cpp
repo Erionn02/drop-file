@@ -3,8 +3,7 @@
 #include <fmt/format.h>
 
 
-nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_test_file_path) {
-    std::filesystem::path file_path{parsed_test_file_path};
+nlohmann::json InitSessionMessage::createSendMessage(const std::filesystem::path &file_path, bool is_compressed) {
     if (!std::filesystem::exists(file_path)) {
         throw InitSessionMessageException(fmt::format("Given path {} does not exist!", file_path.string()));
     }
@@ -14,7 +13,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::string &parsed_t
     json[FILENAME_KEY] = file_path.filename();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
     json[FILE_HASH_KEY] = std::filesystem::file_size(file_path); // todo calculate actual file hash
-    json[IS_ZIPPED_KEY] = std::filesystem::is_directory(parsed_test_file_path);
+    json[IS_COMPRESSED_KEY] = is_compressed;
     return json;
 }
 
@@ -63,7 +62,7 @@ void InitSessionMessage::validateStringKey(const nlohmann::json &json, const cha
 }
 
 void InitSessionMessage::validateKeysExist(const nlohmann::json &json) {
-    for (auto key: {FILENAME_KEY, FILE_SIZE_KEY, FILE_HASH_KEY, IS_ZIPPED_KEY}) {
+    for (auto key: {FILENAME_KEY, FILE_SIZE_KEY, FILE_HASH_KEY, IS_COMPRESSED_KEY}) {
         validateSingleKeyExists(json, key);
     }
 }
@@ -82,8 +81,8 @@ void InitSessionMessage::validateKeysTypes(const nlohmann::json &json) {
             throw InitSessionMessageException(fmt::format("InitSessionMessage json key {} should be a number.", key));
         }
     }
-    if (!json[IS_ZIPPED_KEY].is_boolean()) {
+    if (!json[IS_COMPRESSED_KEY].is_boolean()) {
         throw InitSessionMessageException(
-                fmt::format("InitSessionMessage json key {} should be a boolean.", IS_ZIPPED_KEY));
+                fmt::format("InitSessionMessage json key {} should be a boolean.", IS_COMPRESSED_KEY));
     }
 }

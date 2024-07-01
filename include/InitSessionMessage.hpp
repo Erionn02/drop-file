@@ -13,7 +13,7 @@ public:
 
 class InitSessionMessage {
 public:
-    static nlohmann::json createSendMessage(const std::string &parsed_test_file_path);
+    static nlohmann::json createSendMessage(const std::filesystem::path &file_path, bool is_compressed);
     static nlohmann::json createReceiveMessage(const std::string &code);
     static nlohmann::json create(const std::string_view &str);
 
@@ -29,7 +29,7 @@ public:
     static inline const char* FILENAME_KEY{"filename"};
     static inline const char* FILE_SIZE_KEY{"file_size"};
     static inline const char* FILE_HASH_KEY{"file_hash"};
-    static inline const char* IS_ZIPPED_KEY{"is_zipped"};
+    static inline const char* IS_COMPRESSED_KEY{"is_compressed*"};
 
     // receive
     static inline const char* CODE_WORDS_KEY{"code_words_key"};

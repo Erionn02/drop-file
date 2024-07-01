@@ -16,12 +16,20 @@ int main(int argc, char *argv[]) {
 
     ClientSocket client_socket("localhost", 12345, "/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
 
-    if (args.action == Action::send) {
-        DropFileSendClient client{std::move(client_socket)};
-        client.sendFile(*args.file_to_send_path);
-    } else {
-        DropFileReceiveClient client{std::move(client_socket), std::cin};
-        client.receiveFile(*args.receive_code);
+    try {
+        if (args.action == Action::send) {
+            DropFileSendClient client{std::move(client_socket)};
+            client.sendFSEntry(*args.file_to_send_path);
+        } else {
+            DropFileReceiveClient client{std::move(client_socket), std::cin};
+            client.receiveFile(*args.receive_code);
+        }
+    } catch (const DropFileBaseException& e) {
+        std::cerr<<e.what();
+        exit(1);
+    } catch (const std::exception& e) {
+        std::cerr<<e.what();
+        exit(2);
     }
 
     spdlog::info("Done!");

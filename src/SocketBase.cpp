@@ -37,7 +37,7 @@ void SocketBase::sendChunk(std::string_view data) {
 void SocketBase::disconnect(std::optional<std::string> disconnect_msg) {
     spdlog::debug("Disconnecting... {}", disconnect_msg.value_or(""));
     if (disconnect_msg.has_value()) {
-        socket_.write_some(asio::buffer(*disconnect_msg));
+        send(*disconnect_msg);
     }
     socket_.lowest_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_send);
 }

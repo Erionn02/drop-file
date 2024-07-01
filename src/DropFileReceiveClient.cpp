@@ -1,5 +1,6 @@
 #include "DropFileReceiveClient.hpp"
 #include "InitSessionMessage.hpp"
+#include "DirectoryCompressor.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -21,11 +22,20 @@ void DropFileReceiveClient::receiveFile(const std::string &code_words) {
     socket.SocketBase::sendACK();
     auto json = nlohmann::json::parse(received);
     std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
+    bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
+    std::filesystem::path receive_path_base = is_compressed
+                                              ? std::filesystem::temp_directory_path()
+                                              : std::filesystem::current_path();
+
 
     std::size_t expected_file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
-    std::ofstream received_file{filename, std::ios::trunc};
+    std::ofstream received_file{receive_path_base / filename, std::ios::trunc};
     spdlog::info("Receiving file...");
     receiveFileImpl(received_file, expected_file_size);
+    if (is_compressed) {
+        DirectoryCompressor compressor{receive_path_base};
+        compressor.decompress(receive_path_base / filename);
+    }
 }
 
 void DropFileReceiveClient::waitForConfirmation() {

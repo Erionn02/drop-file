@@ -2,6 +2,7 @@
 
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 ClientArgs parseArgs(int argc, char **argv) {
     argparse::ArgumentParser program("drop-file", "1.0.0");

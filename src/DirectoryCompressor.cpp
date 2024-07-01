@@ -3,6 +3,7 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/copy.hpp>
+#include <fmt/format.h>
 
 namespace io = boost::iostreams;
 
@@ -12,6 +13,9 @@ DirectoryCompressor::DirectoryCompressor(fs::path directory): directory(std::mov
 
 
 void DirectoryCompressor::decompress(const fs::path &zip_file_path) {
+    if (fs::exists(directory)) {
+        throw DirectoryCompressorException(fmt::format("Directory that you try to decompress into ({}) already exists!", zip_file_path.string()));
+    }
     std::ifstream ifs(zip_file_path, std::ios_base::binary);
     io::filtering_streambuf<io::input> in;
     in.push(io::zlib_decompressor());
@@ -51,6 +55,9 @@ void DirectoryCompressor::deserializeArchive(boost::archive::text_iarchive &arch
 }
 
 void DirectoryCompressor::compress(const fs::path &new_zip_file_path) {
+    if (fs::exists(new_zip_file_path)) {
+        throw DirectoryCompressorException(fmt::format("File that you try to decompress to ({}) already exists!", new_zip_file_path.string()));
+    }
     std::ofstream ofs(new_zip_file_path, std::ios_base::binary);
     io::filtering_streambuf<io::output> out;
     out.push(io::zlib_compressor());

@@ -1,16 +1,21 @@
 #pragma once
+#include "DropFileBaseException.hpp"
 
-#include <iostream>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
+class DirectoryCompressorException: public DropFileBaseException {
+public:
+    using DropFileBaseException::DropFileBaseException;
+};
 
-#include <filesystem>
 
 
 class DirectoryCompressor {

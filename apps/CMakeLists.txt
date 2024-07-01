@@ -1,9 +1,9 @@
 include(CMakePrintHelpers)
 
-add_app(server
+add_app(drop-file-server
         drop-file-server.cpp
         )
 
-add_app(client
+add_app(drop-file
         drop-file.cpp
         )

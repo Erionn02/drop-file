@@ -68,7 +68,23 @@ struct DirectoryCompressorTests: public Test{
         ss << file.rdbuf();
         return ss.str();
     }
-}; 
+};
+
+TEST_F(DirectoryCompressorTests, cannotCompressToArchiveThatAlreadyExists) {
+    setupInputDir();
+
+    DirectoryCompressor dc1{input_dir_path};
+
+    std::ofstream f{archive_path};
+    ASSERT_THROW(dc1.compress(archive_path), DirectoryCompressorException);
+}
+
+TEST_F(DirectoryCompressorTests, cannotDecompressToDirectoryThatAlreadyExists) {
+    setupInputDir();
+
+    DirectoryCompressor dc1{input_dir_path};
+    ASSERT_THROW(dc1.decompress(archive_path), DirectoryCompressorException);
+}
 
 TEST_F(DirectoryCompressorTests, canCompressAndDecompress) {
     setupInputDir();
