@@ -4,10 +4,13 @@
 
 #include <spdlog/spdlog.h>
 
-DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(socket)) {}
+DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(socket)) {
+    std::filesystem::create_directories(DROP_FILE_SENDER_TMP_DIR);
+}
 
 void DropFileSendClient::sendFSEntry(const std::string &path) {
     auto [fs_entry, is_compressed] = compressIfNecessary(path);
+    spdlog::info("File to send: {}", fs_entry.path.string());
     nlohmann::json message_json = InitSessionMessage::createSendMessage(fs_entry.path, is_compressed);
     socket.SocketBase::send(message_json.dump());
     spdlog::info("Message sent.");
@@ -24,8 +27,8 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
     RAIIFSEntry dir_entry{path, false};
     if (should_compress) {
         DirectoryCompressor dir_compressor{dir_entry.path};
-        std::filesystem::path new_path = std::filesystem::temp_directory_path() / dir_entry.path.filename();
-        std::cout<<"Compressing..."<<std::endl;
+        std::filesystem::path new_path = DROP_FILE_SENDER_TMP_DIR / dir_entry.path.filename();
+        std::cout<<"Compressing to "<< new_path << std::endl;
         dir_compressor.compress(new_path);
         std::cout<<"Compressed!"<<std::endl;
         dir_entry = RAIIFSEntry{std::move(new_path), true};

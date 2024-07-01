@@ -24,6 +24,7 @@ private:
 
 
     ClientSocket socket;
+    static inline std::filesystem::path DROP_FILE_SENDER_TMP_DIR{std::filesystem::temp_directory_path() / "drop-file" / "sender"};
 };
 
 

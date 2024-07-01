@@ -7,6 +7,7 @@
 
 DropFileReceiveClient::DropFileReceiveClient(ClientSocket socket, std::istream &interaction_stream) : socket(
         std::move(socket)), interaction_stream(interaction_stream) {
+    std::filesystem::create_directories(DROP_FILE_RECEIVER_TMP_DIR);
 }
 
 void DropFileReceiveClient::receiveFile(const std::string &code_words) {
@@ -24,17 +25,22 @@ void DropFileReceiveClient::receiveFile(const std::string &code_words) {
     std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
     bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
     std::filesystem::path receive_path_base = is_compressed
-                                              ? std::filesystem::temp_directory_path()
+                                              ? DROP_FILE_RECEIVER_TMP_DIR
                                               : std::filesystem::current_path();
 
 
     std::size_t expected_file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
-    std::ofstream received_file{receive_path_base / filename, std::ios::trunc};
+    auto compressed_file_path = receive_path_base / filename;
+    std::ofstream received_file{compressed_file_path, std::ios::trunc};
     spdlog::info("Receiving file...");
     receiveFileImpl(received_file, expected_file_size);
     if (is_compressed) {
-        DirectoryCompressor compressor{receive_path_base};
-        compressor.decompress(receive_path_base / filename);
+        DirectoryCompressor compressor{std::filesystem::current_path() / filename};
+        std::cout << "Decompressing..." << std::endl;
+        compressor.decompress(compressed_file_path);
+        std::cout << "Decompressed..." << std::endl;
+        received_file.close();
+        std::filesystem::remove(compressed_file_path);
     }
 }
 

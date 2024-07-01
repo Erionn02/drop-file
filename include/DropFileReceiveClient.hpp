@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <filesystem>
 
 class DropFileReceiveClient {
 public:
@@ -15,6 +16,7 @@ private:
 
     ClientSocket socket;
     std::istream& interaction_stream; // to enable automatic testing with stream that is not a standard input
+    static inline std::filesystem::path DROP_FILE_RECEIVER_TMP_DIR{std::filesystem::temp_directory_path() / "drop-file" / "receiver"};
 };
 
 

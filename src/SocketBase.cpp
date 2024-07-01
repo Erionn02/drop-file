@@ -13,7 +13,6 @@ SocketBase::SocketBase(boost::asio::ssl::stream<tcp::socket> socket_) : socket_(
                                                                                         BUFFER_SIZE)) {}
 
 void SocketBase::send(std::string_view data) {
-    spdlog::debug("SocketBase::send {}", data);
     MSG_HEADER_t message_length = data.size();
     MSG_HEADER_t ptr_cursor = 0;
     while (message_length >= BUFFER_SIZE) {
@@ -43,7 +42,6 @@ void SocketBase::disconnect(std::optional<std::string> disconnect_msg) {
 }
 
 std::string SocketBase::receive() {
-    spdlog::debug("SocketBase::receive");
     MSG_HEADER_t message_length = getMessageLength();
     std::string message{};
     message.resize(message_length);

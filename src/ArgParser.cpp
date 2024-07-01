@@ -4,6 +4,8 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
+void removeTrailingSlashes(std::string &file_or_code);
+
 ClientArgs parseArgs(int argc, char **argv) {
     argparse::ArgumentParser program("drop-file", "1.0.0");
 
@@ -11,9 +13,10 @@ ClientArgs parseArgs(int argc, char **argv) {
             .nargs(1)
             .required()
             .help("Type of operation: send or receive")
-            .action([](const std::string& value) {
-                if(value != "send" && value != "receive") {
-                    throw std::runtime_error(fmt::format("Incorrect value of action argument: {}. Expected send or receive.", value));
+            .action([](const std::string &value) {
+                if (value != "send" && value != "receive") {
+                    throw std::runtime_error(
+                            fmt::format("Incorrect value of action argument: {}. Expected send or receive.", value));
                 }
                 return value;
             });
@@ -26,7 +29,7 @@ ClientArgs parseArgs(int argc, char **argv) {
 
     try {
         program.parse_args(argc, argv);
-    } catch (const std::runtime_error& err) {
+    } catch (const std::runtime_error &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
         exit(1);
@@ -36,10 +39,18 @@ ClientArgs parseArgs(int argc, char **argv) {
     auto file_or_code = program.get<std::string>("file_or_code");
 
     if (action == "send") {
+        removeTrailingSlashes(file_or_code);
         return {.action = Action::send,
                 .file_to_send_path = file_or_code};
     } else {
         return {.action = Action::receive,
                 .receive_code = file_or_code};
+    }
+}
+
+void removeTrailingSlashes(std::string &file_or_code) {
+    auto pos = file_or_code.find_last_not_of('/');
+    if (pos > 0) {
+        file_or_code = file_or_code.substr(0, pos + 1);
     }
 }
