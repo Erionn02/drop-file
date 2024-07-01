@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "InitSessionMessage.hpp"
+#include "FileHash.hpp"
 
 #include <fstream>
 
@@ -57,7 +58,7 @@ TEST_F(DropFileServerIntegrationTests, doesNotThrowOnJsonWithExpectedStructure) 
     json[InitSessionMessage::FILENAME_KEY] = "example_filename.txt";
     json[InitSessionMessage::IS_COMPRESSED_KEY] = true;
     json[InitSessionMessage::FILE_SIZE_KEY] = 12345;
-    json[InitSessionMessage::FILE_HASH_KEY] = 6789;
+    json[InitSessionMessage::FILE_HASH_KEY] = "Some file hash";
 
     ASSERT_NO_THROW(InitSessionMessage::create(json.dump()));
 }
@@ -68,7 +69,7 @@ TEST_F(DropFileServerIntegrationTests, ignoresOtherAdditionalUnrecognizedKeys) {
     json[InitSessionMessage::FILENAME_KEY] = "example_filename.txt";
     json[InitSessionMessage::IS_COMPRESSED_KEY] = true;
     json[InitSessionMessage::FILE_SIZE_KEY] = 12345;
-    json[InitSessionMessage::FILE_HASH_KEY] = 6789;
+    json[InitSessionMessage::FILE_HASH_KEY] = "Some file hash";
     json["Some completely random key"] = 6789;
 
     ASSERT_NO_THROW(InitSessionMessage::create(json.dump()));
@@ -113,7 +114,7 @@ TEST_F(DropFileServerIntegrationTests, createSendMessageReturnsCorrectJsonOnFile
     ASSERT_EQ(json[InitSessionMessage::ACTION_KEY], "send");
     ASSERT_EQ(json[InitSessionMessage::FILENAME_KEY], path.filename().string());
     ASSERT_EQ(json[InitSessionMessage::FILE_SIZE_KEY], 0);
-    ASSERT_EQ(json[InitSessionMessage::FILE_HASH_KEY], 0);
+    ASSERT_EQ(json[InitSessionMessage::FILE_HASH_KEY], calculateFileHash(path));
     ASSERT_EQ(json[InitSessionMessage::IS_COMPRESSED_KEY], is_zipped);
 }
 

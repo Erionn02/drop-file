@@ -13,6 +13,8 @@ public:
 private:
     void waitForConfirmation();
     void receiveFileImpl(std::ofstream& data_sink, std::size_t expected_bytes);
+    void handleCompressedFile(bool is_compressed, const std::filesystem::path &compressed_file_path) const;
+    void validateFileHash(const std::filesystem::path &compressed_file_path, const std::string &expected_file_hash) const;
 
     ClientSocket socket;
     std::istream& interaction_stream; // to enable automatic testing with stream that is not a standard input

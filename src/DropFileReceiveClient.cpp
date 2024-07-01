@@ -1,12 +1,14 @@
 #include "DropFileReceiveClient.hpp"
 #include "InitSessionMessage.hpp"
 #include "DirectoryCompressor.hpp"
+#include "FileHash.hpp"
 
 #include <spdlog/spdlog.h>
 
 
 DropFileReceiveClient::DropFileReceiveClient(ClientSocket socket, std::istream &interaction_stream) : socket(
         std::move(socket)), interaction_stream(interaction_stream) {
+    std::filesystem::remove_all(DROP_FILE_RECEIVER_TMP_DIR);
     std::filesystem::create_directories(DROP_FILE_RECEIVER_TMP_DIR);
 }
 
@@ -34,12 +36,26 @@ void DropFileReceiveClient::receiveFile(const std::string &code_words) {
     std::ofstream received_file{compressed_file_path, std::ios::trunc};
     spdlog::info("Receiving file...");
     receiveFileImpl(received_file, expected_file_size);
+    validateFileHash(compressed_file_path, json[InitSessionMessage::FILE_HASH_KEY].get<std::string>());
+    handleCompressedFile(is_compressed, compressed_file_path);
+}
+
+void DropFileReceiveClient::validateFileHash(const std::filesystem::path &compressed_file_path,
+                                             const std::string &expected_file_hash) const {
+    auto actual_file_hash = calculateFileHash(compressed_file_path);
+    if (actual_file_hash != expected_file_hash) {
+        throw DropFileBaseException("Received file's hash is not equal to the expected one.");
+    }
+    std::cout << "File hashes match." << std::endl;
+}
+
+void DropFileReceiveClient::handleCompressedFile(bool is_compressed,
+                                                 const std::filesystem::path &compressed_file_path) const {
     if (is_compressed) {
-        DirectoryCompressor compressor{std::filesystem::current_path() / filename};
+        DirectoryCompressor compressor{std::filesystem::current_path() / compressed_file_path.filename()};
         std::cout << "Decompressing..." << std::endl;
         compressor.decompress(compressed_file_path);
         std::cout << "Decompressed..." << std::endl;
-        received_file.close();
         std::filesystem::remove(compressed_file_path);
     }
 }

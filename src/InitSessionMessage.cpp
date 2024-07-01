@@ -1,4 +1,5 @@
 #include "InitSessionMessage.hpp"
+#include "FileHash.hpp"
 
 #include <fmt/format.h>
 
@@ -12,7 +13,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::filesystem::path
     json[ACTION_KEY] = "send";
     json[FILENAME_KEY] = file_path.filename();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
-    json[FILE_HASH_KEY] = std::filesystem::file_size(file_path); // todo calculate actual file hash
+    json[FILE_HASH_KEY] = calculateFileHash(file_path);
     json[IS_COMPRESSED_KEY] = is_compressed;
     return json;
 }
@@ -75,11 +76,10 @@ void InitSessionMessage::validateSingleKeyExists(const nlohmann::json &json, con
 
 void InitSessionMessage::validateKeysTypes(const nlohmann::json &json) {
     validateStringKey(json, FILENAME_KEY);
+    validateStringKey(json, FILE_HASH_KEY);
 
-    for (auto &key: {FILE_SIZE_KEY, FILE_HASH_KEY}) {
-        if (!json[key].is_number_unsigned()) {
-            throw InitSessionMessageException(fmt::format("InitSessionMessage json key {} should be a number.", key));
-        }
+    if (!json[FILE_SIZE_KEY].is_number_unsigned()) {
+        throw InitSessionMessageException(fmt::format("InitSessionMessage json key {} should be a number.", FILE_SIZE_KEY));
     }
     if (!json[IS_COMPRESSED_KEY].is_boolean()) {
         throw InitSessionMessageException(

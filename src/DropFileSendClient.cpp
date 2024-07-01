@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(socket)) {
+    std::filesystem::remove_all(DROP_FILE_SENDER_TMP_DIR);
     std::filesystem::create_directories(DROP_FILE_SENDER_TMP_DIR);
 }
 
