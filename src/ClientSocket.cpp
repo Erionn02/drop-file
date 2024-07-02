@@ -18,6 +18,7 @@ ClientSocket::ClientSocket(const std::string &host, unsigned short port,
                 boost::asio::ssl::context::sslv23}) {
     context.load_verify_file(path_to_cert_authority_file);
     connect(host, port);
+    start();
 }
 
 ClientSocket::ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context)
@@ -29,6 +30,7 @@ ClientSocket::ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, 
 }
 
 void ClientSocket::connect(const std::string &host, unsigned short port) {
+    spdlog::debug("Connecting to the endpoint: {}:{}", host, port);
     tcp::resolver resolver(socket_.get_executor());
     auto endpoints = resolver.resolve(host, std::to_string(port));
     if (endpoints.empty()) {
@@ -36,6 +38,7 @@ void ClientSocket::connect(const std::string &host, unsigned short port) {
     }
     socket_.lowest_layer().connect(*endpoints.begin());
     socket_.handshake(boost::asio::ssl::stream_base::client);
+    spdlog::debug("Connected to the endpoint {}:{}.", host, port);
 }
 
 

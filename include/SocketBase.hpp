@@ -46,8 +46,9 @@ protected:
     using MSG_HEADER_t = std::size_t;
     boost::asio::ssl::stream<tcp::socket> socket_;
     std::unique_ptr<char[]> data_buffer;
-    static constexpr MSG_HEADER_t BUFFER_SIZE{1024 * 1024 * 1}; // 1 MiB
     static inline const std::string ACK{"ACK"};
+public:
+    static constexpr MSG_HEADER_t BUFFER_SIZE{1024 * 1024 * 1}; // 1 MiB
 };
 
 

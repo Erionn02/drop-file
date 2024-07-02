@@ -1,27 +1,65 @@
 #pragma once
 
 #include "SessionsManager.hpp"
+#include "ServerSideClientSession.hpp"
 
 #include <boost/asio/ssl/context_base.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio.hpp>
+#include <spdlog/spdlog.h>
 
 #include <filesystem>
 
 using boost::asio::ip::tcp;
 class SessionsManager;
 
+template<class CreatedSession_t = ServerSideClientSession, class SessionsManager_t = SessionsManager>
 class DropFileServer {
 public:
-    DropFileServer(unsigned short port, const std::filesystem::path& key_cert_dir);
-    void run();
+    DropFileServer(unsigned short port, const std::filesystem::path &key_cert_dir, std::shared_ptr<SessionsManager_t> session_manager = std::make_shared<SessionsManager_t>())
+            : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
+              context_(boost::asio::ssl::context::sslv23),
+              session_manager(std::move(session_manager)) {
+        context_.set_options(
+                boost::asio::ssl::context::default_workarounds
+                | boost::asio::ssl::context::no_sslv2
+                | boost::asio::ssl::context::verify_fail_if_no_peer_cert);
+        context_.use_certificate_chain_file(key_cert_dir / "cert.pem");
+        context_.use_private_key_file(key_cert_dir / "key.pem",
+                                      boost::asio::ssl::context::pem);
+
+        acceptNewConnection();
+    }
+
+    void run() {
+        io_context.run();
+    }
+
+    void stop() {
+        io_context.stop();
+    }
 private:
-    void acceptNewConnection();
+    void acceptNewConnection() {
+        acceptor_.async_accept(
+                [this](const boost::system::error_code &error, tcp::socket socket) {
+                    if (!error) {
+                        spdlog::info("Got new connection...");
+                        try {
+                            std::make_shared<CreatedSession_t>(std::move(socket), context_,
+                                                                      std::weak_ptr{session_manager})->start();
+                        } catch(const std::exception& e) {
+                            spdlog::error("Encountered an unexpected exception while accepting new connection: {}", e.what());
+                        }
+                    }
+
+                    acceptNewConnection();
+                });
+    }
 
     boost::asio::io_context io_context;
     tcp::acceptor acceptor_;
     boost::asio::ssl::context context_;
-    std::shared_ptr<SessionsManager> session_manager{std::make_shared<SessionsManager>()};
+    std::shared_ptr<SessionsManager_t> session_manager;
 public:
     static inline unsigned short DEFAULT_PORT{12345};
 };

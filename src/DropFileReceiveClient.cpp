@@ -19,7 +19,7 @@ void DropFileReceiveClient::receiveFile(const std::string &code_words) {
     auto received = socket.SocketBase::receive();
     spdlog::info("Server response: {}", received);
 
-    waitForConfirmation();
+    waitForUserConfirmation();
 
     spdlog::info("Sending confirmation...");
     socket.SocketBase::sendACK();
@@ -60,7 +60,7 @@ void DropFileReceiveClient::handleCompressedFile(bool is_compressed,
     }
 }
 
-void DropFileReceiveClient::waitForConfirmation() {
+void DropFileReceiveClient::waitForUserConfirmation() {
     spdlog::info("Do you want to proceed? [y/n]");
     char confirmation{};
     interaction_stream >> confirmation;

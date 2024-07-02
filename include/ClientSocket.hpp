@@ -15,6 +15,7 @@ public:
     void connect(const std::string &host, unsigned short port);
 private:
     ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context);
+
     bool verify_certificate(bool preverified, boost::asio::ssl::verify_context &ctx);
     void start();
 
