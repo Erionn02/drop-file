@@ -6,5 +6,6 @@ package_add_test(unit_tests
         InitSessionMessageTests.cpp
         DirectoryCompressorTests.cpp
         FileHashTests.cpp
+        ArgParseTests.cpp
         DEPENDS drop-file-shared-lib
         )

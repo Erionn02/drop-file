@@ -17,9 +17,9 @@ public:
 class DropFileSendClient {
 public:
     DropFileSendClient(ClientSocket socket);
-    void sendFSEntry(const std::string &path);
+    void sendFSEntryMetadata(const std::string &path);
+    void sendFSEntry(std::ifstream data_source);
 private:
-    void sendFileImpl(std::ifstream data_source);
     std::pair<RAIIFSEntry, bool> compressIfNecessary(const std::string &path);
 
 

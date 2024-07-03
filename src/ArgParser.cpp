@@ -32,7 +32,7 @@ ClientArgs parseArgs(int argc, char **argv) {
     } catch (const std::runtime_error &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
-        exit(1);
+        throw;
     }
 
     auto action = program.get<std::string>("action");
@@ -50,7 +50,9 @@ ClientArgs parseArgs(int argc, char **argv) {
 
 void removeTrailingSlashes(std::string &file_or_code) {
     auto pos = file_or_code.find_last_not_of('/');
-    if (pos > 0) {
+    if (pos != std::string::npos) {
         file_or_code = file_or_code.substr(0, pos + 1);
+    } else {
+        file_or_code = file_or_code.substr(0, std::min(file_or_code.size(), 1ul));
     }
 }

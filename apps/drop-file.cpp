@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     try {
         if (args.action == Action::send) {
             DropFileSendClient client{std::move(client_socket)};
-            client.sendFSEntry(*args.file_to_send_path);
+            client.sendFSEntryMetadata(*args.file_to_send_path);
         } else {
             DropFileReceiveClient client{std::move(client_socket), std::cin};
             client.receiveFile(*args.receive_code);

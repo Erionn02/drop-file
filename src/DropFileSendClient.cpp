@@ -9,7 +9,7 @@ DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(s
     std::filesystem::create_directories(DROP_FILE_SENDER_TMP_DIR);
 }
 
-void DropFileSendClient::sendFSEntry(const std::string &path) {
+void DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
     auto [fs_entry, is_compressed] = compressIfNecessary(path);
     spdlog::info("File to send: {}", fs_entry.path.string());
     nlohmann::json message_json = InitSessionMessage::createSendMessage(fs_entry.path, is_compressed);
@@ -20,7 +20,7 @@ void DropFileSendClient::sendFSEntry(const std::string &path) {
     spdlog::info("Waiting for client to confirm");
     socket.SocketBase::receiveACK();
     std::ifstream file{fs_entry.path, std::ios::binary};
-    sendFileImpl(std::move(file));
+    sendFSEntry(std::move(file));
 }
 
 std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::string &path) {
@@ -37,7 +37,7 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
     return {std::move(dir_entry), should_compress};
 }
 
-void DropFileSendClient::sendFileImpl(std::ifstream data_source) {
+void DropFileSendClient::sendFSEntry(std::ifstream data_source) {
     std::streamsize bytes_read;
     auto [buffer_ptr, buffer_size] = socket.SocketBase::getBuffer();
     do {
