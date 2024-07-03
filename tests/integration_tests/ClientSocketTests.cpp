@@ -17,6 +17,7 @@ public:
 
     void start();
 
+
     std::weak_ptr<DummyTestSessionManager> test_session_manager;
 };
 
@@ -45,7 +46,7 @@ struct ClientSocketTest : public Test {
             std::make_shared<DummyTestSessionManager>([this](auto socket) {
                 setPeerSocket(std::move(socket));
             })};
-    DropFileServer<SocketBaseWrapper, DummyTestSessionManager> test_server{DropFileServer<>::DEFAULT_PORT,
+    DropFileServer<SocketBaseWrapper, DummyTestSessionManager> test_server{TEST_PORT,
                                                                            EXAMPLE_CERT_DIR,
                                                                            test_session_manager};
     SocketBase::MessageHandler async_message_handler;
@@ -77,13 +78,21 @@ struct ClientSocketTest : public Test {
         }
     }
 
-    std::future<std::string> asyncReceiveMessages(std::promise<std::string>& response_promise, std::size_t how_many) {
-        async_message_handler = [&, how_many](std::string_view content){
+    ClientSocket createClientSocket() {
+        ClientSocket client_socket{"localhost", TEST_PORT, EXAMPLE_CERT_DIR"/cert.pem"};
+        waitForPeerSocket();
+        return client_socket;
+    }
+
+    std::future<std::string> asyncReceiveMessages(std::promise<std::string> &response_promise, std::size_t how_many) {
+        async_message_handler = [&, how_many](std::string_view content) {
             static std::string final_received_message{};
+            final_received_message += content;
             static std::size_t received_messages{0};
             if (++received_messages < how_many) {
-                final_received_message += content;
                 peer_socket->asyncReadMessage(SocketBase::BUFFER_SIZE, async_message_handler);
+            } else {
+                response_promise.set_value(final_received_message);
             }
         };
         peer_socket->asyncReadMessage(SocketBase::BUFFER_SIZE, async_message_handler);
@@ -93,7 +102,7 @@ struct ClientSocketTest : public Test {
 
 
 TEST_F(ClientSocketTest, twoSocketsCanTalkToEachOther) {
-    ClientSocket client_socket{"localhost", 12345, EXAMPLE_CERT_DIR"/cert.pem"};
+    ClientSocket client_socket{"localhost", TEST_PORT, EXAMPLE_CERT_DIR"/cert.pem"};
     waitForPeerSocket();
     std::string_view test_message{"Hello, world!"};
     client_socket.send(test_message);
@@ -104,8 +113,8 @@ TEST_F(ClientSocketTest, twoSocketsCanTalkToEachOther) {
 }
 
 TEST_F(ClientSocketTest, canReturnMessageCopy) {
-    ClientSocket client_socket{"localhost", 12345, EXAMPLE_CERT_DIR"/cert.pem"};
-    waitForPeerSocket();
+    ClientSocket client_socket = createClientSocket();
+
     std::string_view test_message{"Hello, world!"};
     client_socket.send(test_message);
 
@@ -114,17 +123,45 @@ TEST_F(ClientSocketTest, canReturnMessageCopy) {
     ASSERT_EQ(test_message, received_message);
 }
 
+TEST_F(ClientSocketTest, returnsBufferPtr) {
+    ClientSocket client_socket = createClientSocket();
+
+    std::string_view test_message{"Hello, world!"};
+    client_socket.send(test_message);
+
+    auto received_message = peer_socket->receiveToBuffer();
+
+    auto [buffer_ptr, buffer_size] = peer_socket->getBuffer();
+    std::string_view buffer_data{buffer_ptr, received_message.size()};
+    ASSERT_EQ(received_message, buffer_data);
+}
+
 TEST_F(ClientSocketTest, canSendAndReceiveACK) {
-    ClientSocket client_socket{"localhost", 12345, EXAMPLE_CERT_DIR"/cert.pem"};
-    waitForPeerSocket();
+    ClientSocket client_socket = createClientSocket();
+
 
     client_socket.sendACK();
     ASSERT_NO_THROW(peer_socket->receiveACK());
 }
 
+TEST_F(ClientSocketTest, canReadMessageAsync) {
+    ClientSocket client_socket = createClientSocket();
+
+
+    std::size_t message_length{100'000};
+    std::string message = generateRandomString(message_length);
+    std::promise<std::string_view> p{};
+    peer_socket->asyncReadMessage(SocketBase::BUFFER_SIZE, [&](std::string_view msg) {
+        p.set_value(msg);
+    });
+    client_socket.send(message);
+
+
+    ASSERT_EQ(p.get_future().get(), message);
+}
+
 TEST_F(ClientSocketTest, canSendInPartsMessageBiggerThanBufferSize) {
-    ClientSocket client_socket{"localhost", 12345, EXAMPLE_CERT_DIR"/cert.pem"};
-    waitForPeerSocket();
+    ClientSocket client_socket = createClientSocket();
 
     std::size_t compounded_messages{3};
     std::size_t message_size = compounded_messages * SocketBase::BUFFER_SIZE;
@@ -136,6 +173,13 @@ TEST_F(ClientSocketTest, canSendInPartsMessageBiggerThanBufferSize) {
 
 
     ASSERT_EQ(future_result.get(), message);
+}
+
+TEST_F(ClientSocketTest, cannotAsynchronouslyReadMessageBiggerThanBufferSize) {
+    ClientSocket client_socket = createClientSocket();
+
+
+    ASSERT_THROW(client_socket.asyncReadMessage(SocketBase::BUFFER_SIZE * 2, [](std::string_view){}), SocketException);
 }
 
 /*

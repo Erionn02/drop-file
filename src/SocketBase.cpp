@@ -55,6 +55,7 @@ std::size_t SocketBase::getMessageLength() {
     boost::asio::read(socket_, buffer, boost::asio::transfer_exactly(buffer.size()));
     spdlog::debug("Receive message length: {}", message_length);
     if (message_length > BUFFER_SIZE) {
+        disconnect("Cannot receive message of this size.");
         throw SocketException(
                 fmt::format("Somebody is trying to send {} bytes in single message, which is more than allowed ({})",
                             message_length, BUFFER_SIZE));
@@ -87,7 +88,7 @@ void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler
                                 if (!ec) {
                                     MSG_HEADER_t message_size = *std::bit_cast<MSG_HEADER_t *>(data_buffer.get());
                                     if (message_size > max_msg_size) {
-                                        spdlog::info(
+                                        spdlog::warn(
                                                 "Somebody tried to send {} bytes, which is more than allowed ({}) for this callback.",
                                                 message_size, max_msg_size);
                                         return;
