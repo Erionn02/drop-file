@@ -38,7 +38,9 @@ void ServerSideClientSession::registerSession(nlohmann::json json) {
     if (auto manager = sessions_manager.lock()) {
         if (json[InitSessionMessage::ACTION_KEY] == "send") {
             std::string session_code = manager->registerSender(std::static_pointer_cast<ServerSideClientSession>(shared_from_this()), std::move(json));
-            send(fmt::format("Enter on another device: './drop-file receive {}'", session_code));
+            nlohmann::json response{};
+            response[InitSessionMessage::CODE_WORDS_KEY] = session_code;
+            send(response.dump());
         } else {
             std::string code_words_key = json[InitSessionMessage::CODE_WORDS_KEY];
             auto [sender, session_metadata] = manager->getSenderWithMetadata(code_words_key);

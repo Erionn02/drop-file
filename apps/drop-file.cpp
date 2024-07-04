@@ -19,7 +19,9 @@ int main(int argc, char *argv[]) {
     try {
         if (args.action == Action::send) {
             DropFileSendClient client{std::move(client_socket)};
-            client.sendFSEntryMetadata(*args.file_to_send_path);
+            auto [fs_entry, receive_code] = client.sendFSEntryMetadata(*args.file_to_send_path);
+            spdlog::info(receive_code);
+            client.sendFSEntry(std::move(fs_entry));
         } else {
             DropFileReceiveClient client{std::move(client_socket), std::cin};
             client.receiveFile(*args.receive_code);

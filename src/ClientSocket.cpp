@@ -45,12 +45,15 @@ void ClientSocket::connect(const std::string &host, unsigned short port) {
 ClientSocket::~ClientSocket() {
     if (io_context) {
         io_context->stop();
+        if (context_thread.joinable()) {
+            context_thread.join();
+        }
     }
 }
 
 void ClientSocket::start() {
-    context_thread = std::jthread{[this] {
-        io_context->run();
+    context_thread = std::jthread{[io_context_ptr = io_context.get()] {
+        io_context_ptr->run();
     }};
 }
 

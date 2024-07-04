@@ -9,7 +9,7 @@ DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(s
     std::filesystem::create_directories(DROP_FILE_SENDER_TMP_DIR);
 }
 
-void DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
+SendFileAndReceiveCode DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
     auto [fs_entry, is_compressed] = compressIfNecessary(path);
     spdlog::info("File to send: {}", fs_entry.path.string());
     nlohmann::json message_json = InitSessionMessage::createSendMessage(fs_entry.path, is_compressed);
@@ -17,10 +17,10 @@ void DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
     spdlog::info("Message sent.");
     std::string received_msg = socket.SocketBase::receive();
     spdlog::info("Server response: {}", received_msg);
-    spdlog::info("Waiting for client to confirm");
-    socket.SocketBase::receiveACK();
-    std::ifstream file{fs_entry.path, std::ios::binary};
-    sendFSEntry(std::move(file));
+    auto json = nlohmann::json::parse(received_msg);
+    auto receive_code = json[InitSessionMessage::CODE_WORDS_KEY].get<std::string>();
+    spdlog::info("Enter on another device: './drop-file receive {}'", receive_code);
+    return {std::move(fs_entry), std::move(receive_code)};
 }
 
 std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::string &path) {
@@ -37,11 +37,15 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
     return {std::move(dir_entry), should_compress};
 }
 
-void DropFileSendClient::sendFSEntry(std::ifstream data_source) {
+void DropFileSendClient::sendFSEntry(RAIIFSEntry data_source) {
+    spdlog::info("Waiting for client to confirm");
+    socket.SocketBase::receiveACK();
+    std::ifstream file{data_source.path, std::ios::binary};
+
     std::streamsize bytes_read;
     auto [buffer_ptr, buffer_size] = socket.SocketBase::getBuffer();
     do {
-        bytes_read = data_source.readsome(buffer_ptr, static_cast<std::streamsize>(buffer_size));
+        bytes_read = file.readsome(buffer_ptr, static_cast<std::streamsize>(buffer_size));
         spdlog::debug("Bytes read: {}", bytes_read);
         if (bytes_read > 0) {
             socket.SocketBase::send({buffer_ptr, static_cast<std::size_t>(bytes_read)});
