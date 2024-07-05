@@ -3,7 +3,7 @@
 #include "SocketBase.hpp"
 #include "ClientSocket.hpp"
 #include "DropFileServer.hpp"
-#include "Utils.hpp"
+#include "TestHelpers.hpp"
 
 using namespace ::testing;
 

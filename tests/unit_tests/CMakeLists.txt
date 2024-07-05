@@ -9,3 +9,4 @@ package_add_test(unit_tests
         ArgParseTests.cpp
         DEPENDS drop-file-shared-lib
         )
+target_include_directories(unit_tests PRIVATE ../test_utils)

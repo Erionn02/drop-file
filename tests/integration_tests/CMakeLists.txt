@@ -10,3 +10,5 @@ package_add_test(integration_tests
         )
 
 target_compile_definitions(integration_tests PRIVATE EXAMPLE_CERT_DIR="${CMAKE_SOURCE_DIR}/example_assets")
+
+target_include_directories(integration_tests PRIVATE ../test_utils)

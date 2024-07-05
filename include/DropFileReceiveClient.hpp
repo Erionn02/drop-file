@@ -12,7 +12,7 @@ public:
     void receiveFile(const std::string& code_words);
 private:
     void waitForUserConfirmation();
-    void receiveFileImpl(std::ofstream& data_sink, std::size_t expected_bytes);
+    void receiveFileImpl(const std::filesystem::path &file_to_receive_path, std::size_t expected_bytes);
     void handleCompressedFile(bool is_compressed, const std::filesystem::path &compressed_file_path) const;
     void validateFileHash(const std::filesystem::path &compressed_file_path, const std::string &expected_file_hash) const;
 

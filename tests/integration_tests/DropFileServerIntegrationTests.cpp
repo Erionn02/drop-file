@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 
+#include "TestHelpers.hpp"
 #include "ArgParser.hpp"
 #include "DropFileSendClient.hpp"
 #include "DropFileReceiveClient.hpp"
 #include "DropFileServer.hpp"
+
 
 #include <filesystem>
 
@@ -14,7 +16,7 @@ struct DropFileServerIntegrationTests : public Test {
     DropFileServer<> server{DropFileServer<>::DEFAULT_PORT, EXAMPLE_CERT_DIR };
     const std::filesystem::path TEST_FILE_PATH{std::filesystem::temp_directory_path() / "test_file.txt"};
 
-    const std::string FILE_CONTENT{sizeof("Hello world, this is some content!")};
+    const std::string FILE_CONTENT{"Hello world, this is some content!"};
     std::jthread server_thread;
 
     void SetUp() override {
@@ -42,6 +44,19 @@ struct DropFileServerIntegrationTests : public Test {
     }
 };
 
+TEST_F(DropFileServerIntegrationTests, doesNotSendFileWhenUserDoesNotConfirm) {
+    DropFileSendClient send_client{createClientSocket()};
+
+
+    std::stringstream interaction_stream;
+    interaction_stream << 'n';
+    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
+
+    ASSERT_DEATH(recv_client.receiveFile(receive_code), "Entered 'n', aborting.");
+}
+
+
 TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
     DropFileSendClient send_client{createClientSocket()};
 
@@ -59,4 +74,11 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
 
     receive_result.get();
     ASSERT_TRUE(std::filesystem::exists(getExpectedPath()));
+    ASSERT_EQ(getFileContent(TEST_FILE_PATH), FILE_CONTENT);
+    ASSERT_EQ(getFileContent(getExpectedPath()), FILE_CONTENT);
+}
+
+TEST_F(DropFileServerIntegrationTests, canSendAndReceiveDirectory) {
+    // todo write this test
+    ASSERT_TRUE(false);
 }

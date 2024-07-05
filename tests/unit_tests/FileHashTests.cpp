@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "FileHash.hpp"
-#include "Utils.hpp"
+#include "TestHelpers.hpp"
 
 #include <spdlog/spdlog.h>
 

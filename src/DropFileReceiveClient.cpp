@@ -30,14 +30,11 @@ void DropFileReceiveClient::receiveFile(const std::string &code_words) {
                                               ? DROP_FILE_RECEIVER_TMP_DIR
                                               : std::filesystem::current_path();
 
+    std::filesystem::path file_to_receive_path = receive_path_base / filename;
 
-    std::size_t expected_file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
-    auto compressed_file_path = receive_path_base / filename;
-    std::ofstream received_file{compressed_file_path, std::ios::trunc};
-    spdlog::info("Receiving file...");
-    receiveFileImpl(received_file, expected_file_size);
-    validateFileHash(compressed_file_path, json[InitSessionMessage::FILE_HASH_KEY].get<std::string>());
-    handleCompressedFile(is_compressed, compressed_file_path);
+    receiveFileImpl(file_to_receive_path, json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>());
+    validateFileHash(file_to_receive_path, json[InitSessionMessage::FILE_HASH_KEY].get<std::string>());
+    handleCompressedFile(is_compressed, file_to_receive_path);
 }
 
 void DropFileReceiveClient::validateFileHash(const std::filesystem::path &compressed_file_path,
@@ -65,21 +62,24 @@ void DropFileReceiveClient::waitForUserConfirmation() {
     char confirmation{};
     interaction_stream >> confirmation;
     if (confirmation != 'y') {
-        spdlog::info("Entered {} aborting.", confirmation);
+        std::cerr<< fmt::format("Entered '{}', aborting.", confirmation);
         socket.SocketBase::send("abort");
         exit(1);
     }
 }
 
-void DropFileReceiveClient::receiveFileImpl(std::ofstream &data_sink, std::size_t expected_bytes) {
+void DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_receive_path, std::size_t expected_bytes) {
+    spdlog::info("Receiving file...");
+    std::ofstream received_file{file_to_receive_path, std::ios::trunc};
     std::size_t total_transferred_bytes{0};
     while (total_transferred_bytes < expected_bytes) {
         std::string_view data = socket.SocketBase::receiveToBuffer();
         spdlog::debug("Received {} bytes chunk", data.size());
         std::size_t left_to_transfer = expected_bytes - total_transferred_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
-        data_sink.write(data.data(), static_cast<std::streamsize>(write_size));
+        received_file.write(data.data(), static_cast<std::streamsize>(write_size));
         total_transferred_bytes += write_size;
         socket.SocketBase::sendACK();
     }
+    received_file.flush();
 }

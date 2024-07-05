@@ -26,7 +26,6 @@ struct RAIIFSEntry {
 
     ~RAIIFSEntry() {
         if (should_remove) {
-            spdlog::debug("Destroying");
             std::filesystem::remove_all(path);
         }
     }
