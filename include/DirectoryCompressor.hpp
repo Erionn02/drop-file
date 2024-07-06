@@ -3,6 +3,8 @@
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <indicators/indeterminate_progress_bar.hpp>
+
 
 #include <iostream>
 #include <fstream>
@@ -33,6 +35,7 @@ private:
     void deserializeArchive(boost::archive::text_iarchive &archive);
 
     fs::path directory;
+    indicators::IndeterminateProgressBar progress_bar;
 
     struct DirEntryInfo {
         std::string path;

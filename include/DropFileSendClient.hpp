@@ -5,9 +5,12 @@
 #include "DropFileBaseException.hpp"
 #include "RAIIFSEntry.hpp"
 
+#include <indicators/progress_bar.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+
 
 class DropFileSendException: public DropFileBaseException {
 public:
@@ -23,6 +26,8 @@ public:
     void sendFSEntry(RAIIFSEntry data_source);
 private:
     std::pair<RAIIFSEntry, bool> compressIfNecessary(const std::string &path);
+    indicators::ProgressBar createProgressBar();
+    std::string getReceiveCodeFromServer();
 
 
     ClientSocket socket;

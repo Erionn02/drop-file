@@ -29,7 +29,7 @@ public:
     static inline const char* FILENAME_KEY{"filename"};
     static inline const char* FILE_SIZE_KEY{"file_size"};
     static inline const char* FILE_HASH_KEY{"file_hash"};
-    static inline const char* IS_COMPRESSED_KEY{"is_compressed*"};
+    static inline const char* IS_COMPRESSED_KEY{"is_compressed"};
 
     // receive
     static inline const char* CODE_WORDS_KEY{"code_words_key"};

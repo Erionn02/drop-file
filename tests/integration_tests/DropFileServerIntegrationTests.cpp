@@ -21,11 +21,34 @@ struct DropFileServerIntegrationTests : public Test {
 
     void SetUp() override {
         std::filesystem::remove_all(getExpectedPath());
-        std::ofstream file{TEST_FILE_PATH, std::ios::trunc | std::ios::binary};
-        file.write(FILE_CONTENT.data(), static_cast<std::streamsize>(FILE_CONTENT.size()));
         server_thread = std::jthread{[&]{
             server.run();
         }};
+    }
+
+    void createTestFile() const {
+        std::ofstream file{TEST_FILE_PATH, std::ios::trunc | std::ios::binary};
+        file.write(FILE_CONTENT.data(), static_cast<std::streamsize>(FILE_CONTENT.size()));
+    }
+
+    void createTestDirectory() const {
+        std::filesystem::create_directories(TEST_FILE_PATH);
+        {
+            std::ofstream file{TEST_FILE_PATH / "test_file.txt"};
+            file << "Some content";
+        }
+        {
+            std::ofstream file{TEST_FILE_PATH / "some_binary_thrash_file", std::ios::binary};
+            auto content = generateRandomString(100000);
+            file.write(content.data(), static_cast<long>(content.size()));
+            file.flush();
+        }
+        fs::create_directories(TEST_FILE_PATH / "nested_dir");
+        {
+            std::ofstream file{TEST_FILE_PATH / "nested_dir" / "test_file.txt"};
+            file << "Some other content";
+        }
+        fs::create_directories(TEST_FILE_PATH / "another_nested_dir");
     }
 
     void TearDown () override {
@@ -47,6 +70,7 @@ struct DropFileServerIntegrationTests : public Test {
 TEST_F(DropFileServerIntegrationTests, doesNotSendFileWhenUserDoesNotConfirm) {
     DropFileSendClient send_client{createClientSocket()};
 
+    createTestFile();
 
     std::stringstream interaction_stream;
     interaction_stream << 'n';
@@ -60,6 +84,7 @@ TEST_F(DropFileServerIntegrationTests, doesNotSendFileWhenUserDoesNotConfirm) {
 TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
     DropFileSendClient send_client{createClientSocket()};
 
+    createTestFile();
 
     std::stringstream interaction_stream;
     interaction_stream << 'y';
@@ -79,6 +104,23 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
 }
 
 TEST_F(DropFileServerIntegrationTests, canSendAndReceiveDirectory) {
-    // todo write this test
-    ASSERT_TRUE(false);
+    DropFileSendClient send_client{createClientSocket()};
+
+    createTestDirectory();
+
+    std::stringstream interaction_stream;
+    interaction_stream << 'y';
+    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
+
+    auto receive_result = std::async(std::launch::async, [&]{
+        recv_client.receiveFile(receive_code);
+    });
+    spdlog::info(receive_code);
+    send_client.sendFSEntry(std::move(fs_entry));
+
+    receive_result.get();
+    ASSERT_TRUE(std::filesystem::exists(getExpectedPath()));
+    ASSERT_TRUE(std::filesystem::is_directory(getExpectedPath()));
+    assertDirectoriesEqual(getExpectedPath(), TEST_FILE_PATH);
 }

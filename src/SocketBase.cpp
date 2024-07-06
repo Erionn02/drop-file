@@ -53,7 +53,6 @@ std::size_t SocketBase::getMessageLength() {
     MSG_HEADER_t message_length{};
     boost::asio::mutable_buffer buffer{&message_length, sizeof(message_length)};
     boost::asio::read(socket_, buffer, boost::asio::transfer_exactly(buffer.size()));
-    spdlog::debug("Receive message length: {}", message_length);
     if (message_length > BUFFER_SIZE) {
         disconnect("Cannot receive message of this size.");
         throw SocketException(
@@ -113,7 +112,7 @@ SocketBase::asyncReadMessageImpl(std::shared_ptr<SocketBase> self, std::function
                                     message_handler(std::string_view{data_buffer.get(),
                                                                      message_size});
                                 } else {
-                                    spdlog::debug(
+                                    spdlog::error(
                                             "Encountered an error during async read, aborting. Details: {}",
                                             ec.what());
                                 }
