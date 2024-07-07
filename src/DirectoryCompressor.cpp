@@ -110,7 +110,7 @@ void DirectoryCompressor::compressDirectory(const fs::path &dir_to_compress, boo
 void DirectoryCompressor::addDirectoryToArchive(boost::archive::text_oarchive &archive,
                                                 const fs::path &relative_path) const {
     DirEntryInfo info;
-    info.path = relative_path;
+    info.path = relative_path.string();
     info.is_directory = true;
     archive << info;
 }

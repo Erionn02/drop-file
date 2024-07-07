@@ -4,6 +4,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <filesystem>
+
 
 class InitSessionMessageException: public DropFileBaseException {
 public:

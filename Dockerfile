@@ -13,6 +13,6 @@ COPY ./conanfile.txt .
 RUN conan install conanfile.txt
 COPY . .
 RUN mkdir -p build && cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Debug .. && cmake --build . -- -j $(nproc --all)
+    cmake -DCMAKE_BUILD_TYPE=Debug .. && cmake --build . -t drop-file-server -- -j $(nproc --all)
 
 CMD ["./build/bin/drop-file-server"]

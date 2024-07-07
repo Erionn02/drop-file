@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::err);
     ClientArgs args = parseArgs(argc, argv);
 
-    ClientSocket client_socket("localhost", 12345, "/home/kuba/CLionProjects/drop-file/example_assets/cert.pem");
+    ClientSocket client_socket("127.0.0.1", 12345, CERTS_DIR"/cert.pem");
 
     try {
         if (args.action == Action::send) {

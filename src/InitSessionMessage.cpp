@@ -11,7 +11,7 @@ nlohmann::json InitSessionMessage::createSendMessage(const std::filesystem::path
 
     nlohmann::json json{};
     json[ACTION_KEY] = "send";
-    json[FILENAME_KEY] = file_path.filename();
+    json[FILENAME_KEY] = file_path.filename().string();
     json[FILE_SIZE_KEY] = std::filesystem::file_size(file_path);
     json[FILE_HASH_KEY] = calculateFileHash(file_path);
     json[IS_COMPRESSED_KEY] = is_compressed;

@@ -28,7 +28,7 @@ inline void assertDirectoriesEqual(const fs::path& dir1, const fs::path& dir2) {
     auto dir_entries_2 = getSortedDirEntries(dir2);
     ASSERT_EQ(dir_entries_1.size(), dir_entries_2.size());
     for(auto [el1, el2]: boost::range::combine(dir_entries_1, dir_entries_2)) { // std::views::zip requires gcc 13 :(
-        ASSERT_EQ(el1.path().filename(), el1.path().filename());
+        ASSERT_EQ(el1.path().filename(), el2.path().filename());
         ASSERT_EQ(el1.is_directory(), el2.is_directory());
         ASSERT_EQ(el1.is_regular_file(), el2.is_regular_file());
         if (el1.is_directory()) {
