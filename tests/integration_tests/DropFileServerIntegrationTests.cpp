@@ -20,6 +20,7 @@ struct DropFileServerIntegrationTests : public Test {
     std::jthread server_thread;
 
     void SetUp() override {
+        spdlog::set_level(spdlog::level::debug);
         std::filesystem::remove_all(getExpectedPath());
         server_thread = std::jthread{[&]{
             server.run();
@@ -123,4 +124,18 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveDirectory) {
     ASSERT_TRUE(std::filesystem::exists(getExpectedPath()));
     ASSERT_TRUE(std::filesystem::is_directory(getExpectedPath()));
     assertDirectoriesEqual(getExpectedPath(), TEST_FILE_PATH);
+}
+
+TEST_F(DropFileServerIntegrationTests, throwsWhenGivenPathAlreadyExists) {
+    DropFileSendClient send_client{createClientSocket()};
+
+    createTestDirectory();
+
+    std::stringstream interaction_stream;
+    interaction_stream << 'y';
+    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
+
+    std::filesystem::create_directories(getExpectedPath());
+    ASSERT_THROW(recv_client.receiveFile(receive_code), DropFileReceiveException);
 }

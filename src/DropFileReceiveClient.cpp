@@ -91,6 +91,9 @@ void DropFileReceiveClient::getUserConfirmation() {
 
 void
 DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_receive_path, std::size_t expected_bytes) {
+    if (std::filesystem::exists(file_to_receive_path)) {
+        throw DropFileReceiveException(fmt::format("Path {} already exists!", file_to_receive_path.string()));
+    }
     std::ofstream received_file{file_to_receive_path, std::ios::trunc};
     std::size_t total_transferred_bytes{0};
     auto progress_bar = createProgressBar();
