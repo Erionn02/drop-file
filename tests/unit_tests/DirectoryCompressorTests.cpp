@@ -2,6 +2,7 @@
 
 #include "DirectoryCompressor.hpp"
 #include "TestHelpers.hpp"
+#include "Utils.hpp"
 
 using namespace ::testing;
 
@@ -11,6 +12,7 @@ struct DirectoryCompressorTests: public Test{
     fs::path archive_path {fs::temp_directory_path() / "test_archive"};
     
     void SetUp() override {
+        std::cout<<"Size: " << getDirectorySize("/home/kuba/Documents")<< std::endl;
         deleteTestFiles();
     }
     

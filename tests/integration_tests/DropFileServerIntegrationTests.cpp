@@ -14,7 +14,7 @@ using namespace ::testing;
 
 struct DropFileServerIntegrationTests : public Test {
     DropFileServer<> server{DropFileServer<>::DEFAULT_PORT, EXAMPLE_CERT_DIR };
-    const std::filesystem::path TEST_FILE_PATH{std::filesystem::temp_directory_path() / "test_file.txt"};
+    const std::filesystem::path TEST_FILE_PATH{std::filesystem::temp_directory_path() / "test_fs_entry"};
 
     const std::string FILE_CONTENT{"Hello world, this is some content!"};
     std::jthread server_thread;
@@ -94,7 +94,7 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
     auto receive_result = std::async(std::launch::async, [&]{
         recv_client.receiveFile(receive_code);
     });
-    spdlog::info(receive_code);
+
     send_client.sendFSEntry(std::move(fs_entry));
 
     receive_result.get();
@@ -114,10 +114,10 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveDirectory) {
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
     auto receive_result = std::async(std::launch::async, [&]{
-        recv_client.receiveFile(receive_code);
+        send_client.sendFSEntry(std::move(fs_entry));
     });
-    spdlog::info(receive_code);
-    send_client.sendFSEntry(std::move(fs_entry));
+    recv_client.receiveFile(receive_code);
+
 
     receive_result.get();
     ASSERT_TRUE(std::filesystem::exists(getExpectedPath()));

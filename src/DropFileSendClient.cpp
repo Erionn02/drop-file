@@ -13,6 +13,10 @@ DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(s
     std::filesystem::create_directories(DROP_FILE_SENDER_TMP_DIR);
 }
 
+DropFileSendClient::~DropFileSendClient() {
+    std::filesystem::remove_all(DROP_FILE_SENDER_TMP_DIR);
+}
+
 SendFileAndReceiveCode DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
     auto [fs_entry, is_compressed] = compressIfNecessary(path);
     std::cout << "File to send: " << fs_entry.path << std::endl;

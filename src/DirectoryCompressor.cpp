@@ -1,4 +1,5 @@
 #include "DirectoryCompressor.hpp"
+#include "Utils.hpp"
 
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
@@ -37,10 +38,23 @@ void DirectoryCompressor::decompress(const fs::path &zip_file_path) {
 
     std::istringstream archive_input_stream(decompressed_stream.str());
     boost::archive::text_iarchive archive(archive_input_stream);
+    checkLeftDiskSpace(zip_file_path, archive);
+
     progress_bar.set_option(indicators::option::PrefixText {"Decompressing..."});
     deserializeArchive(archive);
-    progress_bar.set_option(indicators::option::PrefixText{"Decompressed."});
+    progress_bar.set_option(indicators::option::PrefixText {"Decompressed."});
     progress_bar.mark_as_completed();
+}
+
+void
+DirectoryCompressor::checkLeftDiskSpace(const fs::path &zip_file_path,
+                                        boost::archive::text_iarchive &archive) const {
+    std::size_t original_size;
+    archive >> original_size;
+    auto left_disk_space = std::filesystem::space(directory.parent_path()).free;
+    if (left_disk_space < original_size) {
+        throw DirectoryCompressorException(fmt::format("Not enough space to decompress {}.", zip_file_path.string()));
+    }
 }
 
 void DirectoryCompressor::deserializeArchive(boost::archive::text_iarchive &archive) {
@@ -82,6 +96,8 @@ void DirectoryCompressor::compress(const fs::path &new_zip_file_path) {
     std::stringstream archive_stream;
     boost::archive::text_oarchive archive(archive_stream);
     progress_bar.set_option(indicators::option::PrefixText{"Compressing directory..."});
+
+    addOriginalDirSizeToArchive(archive);
     compressDirectory(directory, archive);
 
     std::istringstream archive_input_stream(archive_stream.str());
@@ -89,6 +105,11 @@ void DirectoryCompressor::compress(const fs::path &new_zip_file_path) {
 
     progress_bar.set_option(indicators::option::PrefixText{"Directory compressed."});
     progress_bar.mark_as_completed();
+}
+
+void DirectoryCompressor::addOriginalDirSizeToArchive(boost::archive::text_oarchive &archive) const {
+    std::size_t directory_size = getDirectorySize(directory);
+    archive & directory_size;
 }
 
 void DirectoryCompressor::compressDirectory(const fs::path &dir_to_compress, boost::archive::text_oarchive &archive,

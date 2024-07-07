@@ -33,6 +33,8 @@ private:
     void addDirectoryToArchive(boost::archive::text_oarchive &archive, const fs::path &relative_path) const;
     void compressFile(boost::archive::text_oarchive &archive, const fs::path &current, const fs::path &relative) const;
     void deserializeArchive(boost::archive::text_iarchive &archive);
+    void addOriginalDirSizeToArchive(boost::archive::text_oarchive &archive) const;
+    void checkLeftDiskSpace(const fs::path &zip_file_path, boost::archive::text_iarchive &archive) const;
 
     fs::path directory;
     indicators::IndeterminateProgressBar progress_bar;

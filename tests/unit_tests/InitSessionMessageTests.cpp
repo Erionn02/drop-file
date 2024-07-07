@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "InitSessionMessage.hpp"
-#include "FileHash.hpp"
+#include "Utils.hpp"
 
 #include <fstream>
 

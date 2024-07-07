@@ -1,7 +1,7 @@
 #include "DropFileReceiveClient.hpp"
 #include "InitSessionMessage.hpp"
 #include "DirectoryCompressor.hpp"
-#include "FileHash.hpp"
+#include "Utils.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -12,6 +12,10 @@ DropFileReceiveClient::DropFileReceiveClient(ClientSocket socket, std::istream &
         std::move(socket)), interaction_stream(interaction_stream) {
     std::filesystem::remove_all(DROP_FILE_RECEIVER_TMP_DIR);
     std::filesystem::create_directories(DROP_FILE_RECEIVER_TMP_DIR);
+}
+
+DropFileReceiveClient::~DropFileReceiveClient() {
+    std::filesystem::remove_all(DROP_FILE_RECEIVER_TMP_DIR);
 }
 
 void DropFileReceiveClient::receiveFile(const std::string &code_words) {
@@ -40,7 +44,12 @@ nlohmann::json DropFileReceiveClient::getServerResponse() {
     auto received = socket.SocketBase::receive();
     try {
         auto json = nlohmann::json::parse(received);
-        std::cout << fmt::format("Server response: {}", received) << std::endl;
+        bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
+        std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
+        std::size_t file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
+        std::cout << (is_compressed ? "Directory" : "File") << " to receive: " << filename << std::endl;
+        std::cout << (is_compressed ? "Compressed size: " : "Size: ") << bytesToHumanReadable(file_size) << std::endl;
+        assertJsonProperties(json);
         return json;
     } catch (const nlohmann::json::exception &e) {
         throw DropFileReceiveException(
@@ -112,4 +121,20 @@ indicators::ProgressBar DropFileReceiveClient::createProgressBar() {
             option::ShowRemainingTime{true},
             option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
     };
+}
+
+void DropFileReceiveClient::assertJsonProperties(const nlohmann::json &json) {
+    std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
+    if (std::filesystem::exists(filename)) {
+        throw DropFileReceiveException(fmt::format("{} already exist!", filename));
+    }
+    bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
+
+    std::filesystem::path base_dir = is_compressed ? std::filesystem::temp_directory_path()
+                                                   : std::filesystem::current_path();
+    std::filesystem::space_info directory_space_info = std::filesystem::space(base_dir);
+    std::size_t file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
+    if (directory_space_info.free < file_size) {
+        throw DropFileReceiveException("Not enough disk space to receive this file.");
+    }
 }

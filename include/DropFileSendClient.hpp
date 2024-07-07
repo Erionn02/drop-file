@@ -22,6 +22,8 @@ using SendFileAndReceiveCode = std::pair<RAIIFSEntry, std::string>;
 class DropFileSendClient {
 public:
     DropFileSendClient(ClientSocket socket);
+    ~DropFileSendClient();
+
     SendFileAndReceiveCode sendFSEntryMetadata(const std::string &path);
     void sendFSEntry(RAIIFSEntry data_source);
 private:
