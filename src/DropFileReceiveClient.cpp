@@ -5,8 +5,6 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace indicators;
-
 
 DropFileReceiveClient::DropFileReceiveClient(ClientSocket socket, std::istream &interaction_stream) : socket(
         std::move(socket)), interaction_stream(interaction_stream) {
@@ -52,8 +50,7 @@ nlohmann::json DropFileReceiveClient::getServerResponse() {
         assertJsonProperties(json);
         return json;
     } catch (const nlohmann::json::exception &e) {
-        throw DropFileReceiveException(
-                fmt::format("DropFileBaseExceptionCould not parse server response ({}) to json.", received));
+        throw DropFileReceiveException(fmt::format("Error, server response: {}", received));
     }
 }
 
@@ -62,7 +59,7 @@ void DropFileReceiveClient::validateFileHash(const std::filesystem::path &compre
     std::cout << "Comparing file hashes..." << std::endl;
     auto actual_file_hash = calculateFileHash(compressed_file_path);
     if (actual_file_hash != expected_file_hash) {
-        throw DropFileBaseException("Received file's hash is not equal to the expected one.");
+        throw DropFileReceiveException("Received file's hash is not equal to the expected one.");
     }
     std::cout << "File hashes match." << std::endl;
 }
@@ -81,7 +78,7 @@ void DropFileReceiveClient::getUserConfirmation() {
     char confirmation{};
     interaction_stream >> confirmation;
     if (confirmation != 'y') {
-        std::cerr << fmt::format("Entered '{}', aborting.", confirmation);
+        std::cerr << fmt::format("Entered '{}', aborting.", confirmation) << std::endl;
         socket.SocketBase::send("abort");
         exit(1);
     }
@@ -96,7 +93,7 @@ DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_rece
     }
     std::ofstream received_file{file_to_receive_path, std::ios::trunc};
     std::size_t total_transferred_bytes{0};
-    auto progress_bar = createProgressBar();
+    auto progress_bar = createProgressBar("Receiving file");
     while (total_transferred_bytes < expected_bytes) {
         std::string_view data = socket.SocketBase::receiveToBuffer();
         std::size_t left_to_transfer = expected_bytes - total_transferred_bytes;
@@ -107,23 +104,7 @@ DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_rece
         progress_bar.set_progress(100 * total_transferred_bytes / expected_bytes);
     }
     received_file.flush();
-    progress_bar.set_option(option::PrefixText{"File received."});
-}
-
-indicators::ProgressBar DropFileReceiveClient::createProgressBar() {
-    return indicators::ProgressBar{
-            option::BarWidth{50},
-            option::Start{" ["},
-            option::Fill{"█"},
-            option::Lead{"█"},
-            option::Remainder{"-"},
-            option::End{"]"},
-            option::PrefixText{"Receiving file"},
-            option::ForegroundColor{Color::yellow},
-            option::ShowElapsedTime{true},
-            option::ShowRemainingTime{true},
-            option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-    };
+    progress_bar.set_option(indicators::option::PrefixText{"File received."});
 }
 
 void DropFileReceiveClient::assertJsonProperties(const nlohmann::json &json) {

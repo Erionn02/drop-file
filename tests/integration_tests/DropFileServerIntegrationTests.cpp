@@ -13,8 +13,10 @@
 using namespace ::testing;
 
 struct DropFileServerIntegrationTests : public Test {
-    DropFileServer<> server{DropFileServer<>::DEFAULT_PORT, EXAMPLE_CERT_DIR };
+    const unsigned short TEST_PORT{61342};
+    DropFileServer<> server{TEST_PORT, EXAMPLE_CERT_DIR };
     const std::filesystem::path TEST_FILE_PATH{std::filesystem::temp_directory_path() / "test_fs_entry"};
+    std::stringstream interaction_stream;
 
     const std::string FILE_CONTENT{"Hello world, this is some content!"};
     std::jthread server_thread;
@@ -57,6 +59,7 @@ struct DropFileServerIntegrationTests : public Test {
         std::filesystem::remove_all(getExpectedPath());
         server.stop();
         server_thread.join();
+        interaction_stream.clear();
     }
 
     std::filesystem::path getExpectedPath() {
@@ -64,7 +67,12 @@ struct DropFileServerIntegrationTests : public Test {
     }
 
     ClientSocket createClientSocket() {
-        return {"localhost", DropFileServer<>::DEFAULT_PORT, EXAMPLE_CERT_DIR"/cert.pem"};
+        return {"localhost", TEST_PORT, EXAMPLE_CERT_DIR "/cert.pem"};
+    }
+
+    DropFileReceiveClient createRecvClient(char character) {
+        interaction_stream << character;
+        return {createClientSocket(), interaction_stream};
     }
 };
 
@@ -73,23 +81,20 @@ TEST_F(DropFileServerIntegrationTests, doesNotSendFileWhenUserDoesNotConfirm) {
 
     createTestFile();
 
-    std::stringstream interaction_stream;
-    interaction_stream << 'n';
-    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    DropFileReceiveClient recv_client{createRecvClient('n')};
+
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
     ASSERT_DEATH(recv_client.receiveFile(receive_code), "Entered 'n', aborting.");
 }
-
 
 TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {
     DropFileSendClient send_client{createClientSocket()};
 
     createTestFile();
 
-    std::stringstream interaction_stream;
-    interaction_stream << 'y';
-    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    DropFileReceiveClient recv_client{createRecvClient('y')};
+
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
     auto receive_result = std::async(std::launch::async, [&]{
@@ -109,18 +114,17 @@ TEST_F(DropFileServerIntegrationTests, canSendAndReceiveDirectory) {
 
     createTestDirectory();
 
-    std::stringstream interaction_stream;
-    interaction_stream << 'y';
-    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    DropFileReceiveClient recv_client{createRecvClient('y')};
+
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
-    auto receive_result = std::async(std::launch::async, [&]{
+    auto send_result = std::async(std::launch::async, [&]{
         send_client.sendFSEntry(std::move(fs_entry));
     });
     recv_client.receiveFile(receive_code);
 
 
-    receive_result.get();
+    send_result.get();
     ASSERT_TRUE(std::filesystem::exists(getExpectedPath()));
     ASSERT_TRUE(std::filesystem::is_directory(getExpectedPath()));
     assertDirectoriesEqual(getExpectedPath(), TEST_FILE_PATH);
@@ -131,11 +135,16 @@ TEST_F(DropFileServerIntegrationTests, throwsWhenGivenPathAlreadyExists) {
 
     createTestDirectory();
 
-    std::stringstream interaction_stream;
-    interaction_stream << 'y';
-    DropFileReceiveClient recv_client{createClientSocket(), interaction_stream};
+    DropFileReceiveClient recv_client{createRecvClient('y')};
+
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
     std::filesystem::create_directories(getExpectedPath());
     ASSERT_THROW(recv_client.receiveFile(receive_code), DropFileReceiveException);
+}
+
+TEST_F(DropFileServerIntegrationTests, throwsWhenReceivesWithNonExistentCode) {
+    DropFileReceiveClient recv_client{createRecvClient('y')};
+
+    ASSERT_THROW(recv_client.receiveFile("some-non-existent-recv-code"), DropFileReceiveException);
 }

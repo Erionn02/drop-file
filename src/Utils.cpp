@@ -90,3 +90,21 @@ std::size_t getDirectorySize(const std::filesystem::path &directory) {
 
     return total_size;
 }
+
+using namespace indicators;
+
+indicators::ProgressBar createProgressBar(const std::string &initial_text) {
+    return indicators::ProgressBar{
+            option::BarWidth{50},
+            option::Start{" ["},
+            option::Fill{"█"},
+            option::Lead{"█"},
+            option::Remainder{"-"},
+            option::End{"]"},
+            option::PrefixText{initial_text},
+            option::ForegroundColor{Color::yellow},
+            option::ShowElapsedTime{true},
+            option::ShowRemainingTime{true},
+            option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+    };
+}

@@ -6,6 +6,7 @@ package_add_test(integration_tests
         SOURCES
         DropFileServerIntegrationTests.cpp
         ClientSocketTests.cpp
+        MaliciousClientTests.cpp
         DEPENDS drop-file-shared-lib
         )
 

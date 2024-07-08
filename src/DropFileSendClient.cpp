@@ -1,11 +1,9 @@
 #include "DropFileSendClient.hpp"
 #include "InitSessionMessage.hpp"
 #include "DirectoryCompressor.hpp"
+#include "Utils.hpp"
 
 #include <spdlog/spdlog.h>
-
-
-using namespace indicators;
 
 
 DropFileSendClient::DropFileSendClient(ClientSocket socket) : socket(std::move(socket)) {
@@ -61,7 +59,7 @@ void DropFileSendClient::sendFSEntry(RAIIFSEntry data_source) {
     std::ifstream file{data_source.path, std::ios::binary};
     std::size_t file_size = std::filesystem::file_size(data_source.path);
     std::size_t total_bytes_read{0};
-    auto progress_bar = createProgressBar();
+    auto progress_bar = createProgressBar("Sending file");
     std::streamsize bytes_read;
     auto [buffer_ptr, buffer_size] = socket.SocketBase::getBuffer();
     do {
@@ -73,21 +71,5 @@ void DropFileSendClient::sendFSEntry(RAIIFSEntry data_source) {
             socket.SocketBase::receiveACK();
         }
     } while (bytes_read > 0);
-    progress_bar.set_option(option::PrefixText{"File sent."});
-}
-
-indicators::ProgressBar DropFileSendClient::createProgressBar() {
-    return indicators::ProgressBar{
-            option::BarWidth{50},
-            option::Start{" ["},
-            option::Fill{"█"},
-            option::Lead{"█"},
-            option::Remainder{"-"},
-            option::End{"]"},
-            option::PrefixText{"Sending file"},
-            option::ForegroundColor{Color::yellow},
-            option::ShowElapsedTime{true},
-            option::ShowRemainingTime{true},
-            option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-    };
+    progress_bar.set_option(indicators::option::PrefixText{"File sent."});
 }

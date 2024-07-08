@@ -27,6 +27,9 @@ void ServerSideClientSession::handleFirstRead(std::string_view content) {
         spdlog::debug("[ServerSideClientSession] Registering session...");
         registerSession(std::move(json));
         spdlog::debug("[ServerSideClientSession] Session registered.");
+    } catch (const SessionsManagerException& e){
+        std::this_thread::sleep_for(std::chrono::seconds(3)); // to prevent DDOS
+        disconnect(e.what());
     } catch (const DropFileBaseException &e) {
         disconnect(e.what());
     } catch (const boost::wrapexcept<boost::system::system_error> &e) {

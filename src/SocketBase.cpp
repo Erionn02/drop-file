@@ -90,6 +90,9 @@ void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler
                                         spdlog::warn(
                                                 "Somebody tried to send {} bytes, which is more than allowed ({}) for this callback.",
                                                 message_size, max_msg_size);
+                                        safeDisconnect(
+                                                fmt::format("Tried to send {} bytes, which is more than allowed ({}).",
+                                                            message_size, max_msg_size));
                                         return;
                                     }
                                     asyncReadMessageImpl(std::move(self), std::move(message_handler), message_size);
@@ -101,7 +104,8 @@ void SocketBase::asyncReadHeader(size_t max_msg_size, SocketBase::MessageHandler
 }
 
 void
-SocketBase::asyncReadMessageImpl(std::shared_ptr<SocketBase> self, std::function<void(std::string_view)> message_handler,
+SocketBase::asyncReadMessageImpl(std::shared_ptr<SocketBase> self,
+                                 std::function<void(std::string_view)> message_handler,
                                  unsigned long message_size) {
     boost::asio::async_read(socket_, asio::buffer(data_buffer.get(), message_size),
                             asio::transfer_exactly(message_size),
@@ -129,7 +133,8 @@ void SocketBase::receiveACK() {
         } else {
             additional_message = "Too large to print.";
         }
-        throw SocketException(fmt::format("Response not ok. Response size: {}. {}", response.size(), additional_message));
+        throw SocketException(
+                fmt::format("Response not ok. Response size: {}. {}", response.size(), additional_message));
     }
 }
 
@@ -139,4 +144,12 @@ void SocketBase::sendACK() {
 
 std::pair<char *, std::size_t> SocketBase::getBuffer() {
     return {data_buffer.get(), BUFFER_SIZE};
+}
+
+void SocketBase::safeDisconnect(std::optional<std::string> disconnect_msg) {
+    try {
+        disconnect(std::move(disconnect_msg));
+    } catch(const std::exception& e) {
+        spdlog::error(e.what());
+    }
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include "ClientSocket.hpp"
 
-#include <indicators/progress_bar.hpp>
 #include <nlohmann/json.hpp>
 
 #include <string>
@@ -28,7 +27,6 @@ private:
     void validateFileHash(const std::filesystem::path &compressed_file_path, const std::string &expected_file_hash) const;
     void assertJsonProperties(const nlohmann::json &json);
     nlohmann::json getServerResponse();
-    indicators::ProgressBar createProgressBar();
 
 
     ClientSocket socket;

@@ -41,6 +41,7 @@ protected:
     void asyncReadHeader(size_t max_msg_size, MessageHandler message_handler);
     void asyncReadMessageImpl(std::shared_ptr<SocketBase> self, std::function<void(std::string_view)> message_handler,
                               unsigned long message_size);
+    void safeDisconnect(std::optional<std::string> disconnect_msg);
 
 
     using MSG_HEADER_t = std::size_t;
