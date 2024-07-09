@@ -6,7 +6,7 @@
 
 void removeTrailingSlashes(std::string &file_or_code);
 
-ClientArgs parseArgs(int argc, char **argv) {
+ClientArgs parseClientArgs(int argc, char **argv) {
     argparse::ArgumentParser program("drop-file", "1.0.0");
 
     program.add_argument("action")

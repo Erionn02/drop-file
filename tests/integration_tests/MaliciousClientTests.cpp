@@ -107,6 +107,26 @@ struct MaliciousClientTests : public Test {
 
 };
 
+TEST_F(MaliciousClientTests, serverDisconnectsSomebodyWhoSendsFirstMessageThatIsNotJson) {
+    auto test_client = createClientSocket();
+
+    std::size_t message_length{250};
+    std::string not_a_json_msg(message_length, 'a');
+    test_client.SocketBase::send(not_a_json_msg);
+    ASSERT_EQ(test_client.SocketBase::receive(), "Could not parse to json.");
+    ASSERT_THROW(test_client.SocketBase::receive(), boost::exception); // disconnected
+}
+
+TEST_F(MaliciousClientTests, serverDisconnectsSomebodyWhoSendsFirstMessageThatIsAJsonButNotAProperOne) {
+    auto test_client = createClientSocket();
+
+    nlohmann::json json;
+    std::string action_value = "not-a-recv-or-send";
+    json[InitSessionMessage::ACTION_KEY] = action_value;
+    test_client.SocketBase::send(json.dump());
+    ASSERT_EQ(test_client.SocketBase::receive(), fmt::format("InitSessionMessage {} key has unrecognized value: {}.", InitSessionMessage::ACTION_KEY, action_value));
+    ASSERT_THROW(test_client.SocketBase::receive(), boost::exception); // disconnected
+}
 
 TEST_F(MaliciousClientTests, serverDoesNotAllowAbnormallyBigFirstMessages) {
     auto test_client = createClientSocket();

@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::err);
-    ClientArgs args = parseArgs(argc, argv);
+    ClientArgs args = parseClientArgs(argc, argv);
 
     ClientSocket client_socket("127.0.0.1", 12345, CERTS_DIR"/cert.pem");
 

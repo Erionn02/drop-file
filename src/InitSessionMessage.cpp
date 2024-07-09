@@ -31,7 +31,7 @@ nlohmann::json InitSessionMessage::create(const std::string_view &str) {
         validate(json);
         return json;
     } catch (const nlohmann::json::exception &e) {
-        throw InitSessionMessageException(e.what());
+        throw InitSessionMessageException("Could not parse to json.");
     }
 }
 
