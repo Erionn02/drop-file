@@ -3,10 +3,10 @@ FROM rikorose/gcc-cmake:latest
 RUN apt update
 RUN apt install -y pip
 RUN pip install -U conan==1.60.0
-RUN conan profile new default --detect --force
-RUN conan profile update settings.compiler.libcxx=libstdc++11 default
-RUN conan profile update conf.tools.system.package_manager:mode=install default
-RUN conan profile update conf.tools.system.package_manager:sudo=True default
+RUN conan profile new drop-file-profile --detect --force
+RUN conan profile update settings.compiler.libcxx=libstdc++11 drop-file-profile
+RUN conan profile update conf.tools.system.package_manager:mode=install drop-file-profile
+RUN conan profile update conf.tools.system.package_manager:sudo=True drop-file-profile
 
 WORKDIR /drop-file
 COPY ./conanfile.txt .

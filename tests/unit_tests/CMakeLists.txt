@@ -6,7 +6,9 @@ package_add_test(unit_tests
         InitSessionMessageTests.cpp
         DirectoryCompressorTests.cpp
         UtilsTests.cpp
-        ArgParseTests.cpp
+        ClientArgParserTests.cpp
+        ServerArgParserTests.cpp
+        SessionsManagerTests.cpp
         DEPENDS drop-file-shared-lib
         )
 target_include_directories(unit_tests PRIVATE ../test_utils)

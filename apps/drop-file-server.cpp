@@ -1,12 +1,17 @@
 #include "DropFileServer.hpp"
+#include "ServerArgs.hpp"
+#include "ServerArgParser.hpp"
 
 #include <spdlog/spdlog.h>
 
 
-int main() {
+int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
-    spdlog::info("Starting server at port: {}", DropFileServer<>::DEFAULT_PORT);
-    std::filesystem::path cert_key_dir{CERTS_DIR};
-    DropFileServer server{DropFileServer<>::DEFAULT_PORT, cert_key_dir};
+    ServerArgs args = parseServerArgs(argc, argv);
+    spdlog::info("Creating sessions manager...");
+    auto sessions_manager = std::make_shared<SessionsManager>(args.client_timeout,
+                                                              SessionsManager::DEFAULT_CHECK_INTERVAL);
+    spdlog::info("Starting server at port: {}", args.port);
+    DropFileServer server{args.port, args.certs_directory};
     server.run();
 }

@@ -2,7 +2,7 @@
 #include "ClientSocket.hpp"
 #include "DropFileReceiveClient.hpp"
 #include "DropFileSendClient.hpp"
-#include "ArgParser.hpp"
+#include "ClientArgParser.hpp"
 
 #include <spdlog/spdlog.h>
 

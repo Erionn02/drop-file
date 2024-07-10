@@ -65,7 +65,7 @@ macro(setup_conan)
     set(CONAN_SYSTEM_INCLUDES ON)
     conan_cmake_run(
             CONANFILE ${CMAKE_SOURCE_DIR}/conanfile.txt
-            PROFILE default
+            PROFILE drop-file-profile
             BASIC_SETUP
             BUILD missing
     )

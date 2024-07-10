@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "TestHelpers.hpp"
-#include "ArgParser.hpp"
+#include "ClientArgParser.hpp"
 #include "DropFileSendClient.hpp"
 #include "DropFileReceiveClient.hpp"
 #include "DropFileServer.hpp"
@@ -45,7 +45,7 @@ using namespace ::testing;
 
 struct MaliciousClientTests : public Test {
     const unsigned short TEST_PORT{55342};
-    DropFileServer<> server{TEST_PORT, EXAMPLE_CERT_DIR };
+    DropFileServer<> server{TEST_PORT, EXAMPLE_CERT_DIR, std::make_shared<SessionsManager>(SessionsManager::DEFAULT_CLIENT_TIMEOUT, std::chrono::seconds(1))};
     const std::filesystem::path TEST_FILE_PATH{std::filesystem::temp_directory_path() / "test_fs_entry"};
 
     const std::string FILE_CONTENT{"Hello world, this is some content!"};

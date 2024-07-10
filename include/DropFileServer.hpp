@@ -17,7 +17,7 @@ template<class CreatedSession_t = ServerSideClientSession, class SessionsManager
 class DropFileServer {
 public:
     DropFileServer(unsigned short port, const std::filesystem::path &key_cert_dir, std::shared_ptr<SessionsManager_t> session_manager = std::make_shared<SessionsManager_t>())
-            : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
+            : acceptor_(io_context, tcp::endpoint(boost::asio::ip::address(), port)),
               context_(boost::asio::ssl::context::sslv23),
               session_manager(std::move(session_manager)) {
         context_.set_options(
