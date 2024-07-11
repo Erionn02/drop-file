@@ -1,10 +1,8 @@
 #pragma once
 #include "DropFileBaseException.hpp"
 
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 #include <indicators/indeterminate_progress_bar.hpp>
-
+#include <zlib.h>
 
 #include <iostream>
 #include <fstream>
@@ -18,39 +16,45 @@ public:
     using DropFileBaseException::DropFileBaseException;
 };
 
+#pragma pack(push, 1)
+struct DirEntryInfo {
+    DirEntryInfo() = default;
+    DirEntryInfo(bool is_directory, const fs::path &relative_path);
 
+    bool is_directory;
+    char relative_path[PATH_MAX];
+    std::size_t compressed_length{0};
+
+    static inline std::size_t PATH_MAX_LEN{PATH_MAX};
+    static inline std::size_t MAX_FILE_LENGTH{1024ull * 1024ull * 1024ull * 4ull}; // 4 GB
+};
+#pragma pack(pop)
 
 class DirectoryCompressor {
 public:
     DirectoryCompressor(fs::path directory);
 
-    void decompress(const fs::path& zip_file_path);
-    void compress(const fs::path& new_zip_file_path);
+    void decompress(const fs::path& compressed_file_path);
+    void compress(const fs::path& new_compressed_file_path);
 
 private:
-    void compressDirectory(const fs::path &dir_to_compress, boost::archive::text_oarchive &archive,
+    void decompressFile(std::ifstream &compressed_file, const DirEntryInfo &entry_info);
+
+    DirEntryInfo readDirEntryInfo(std::ifstream &zip_file, std::size_t total_file_length);
+
+    void compressDirectory(const fs::path &dir_to_compress, std::ofstream& compressed_archive,
                            const fs::path &relative_path = "");
-    void addDirectoryToArchive(boost::archive::text_oarchive &archive, const fs::path &relative_path) const;
-    void compressFile(boost::archive::text_oarchive &archive, const fs::path &current, const fs::path &relative) const;
-    void deserializeArchive(boost::archive::text_iarchive &archive);
-    void addOriginalDirSizeToArchive(boost::archive::text_oarchive &archive) const;
-    void checkLeftDiskSpace(const fs::path &zip_file_path, boost::archive::text_iarchive &archive) const;
+    void compressFile(const fs::path &file_path, std::ofstream &compressed_archive, const fs::path &relative_path);
+    void addDirectory(std::ofstream &out_file, const fs::path &relative_path);
+    size_t getLeftBytes(std::ifstream &zip_file, size_t total_file_length) const;
+
+    static constexpr std::size_t BUFFER_SIZE{1024*1024};
+    std::pair<int, std::size_t> compressChunk(std::ofstream &compressed_file, z_stream_s &zs,
+                                              std::array<unsigned char, BUFFER_SIZE> &compression_buffer, int flush);
+
 
     fs::path directory;
     indicators::IndeterminateProgressBar progress_bar;
-
-    struct DirEntryInfo {
-        std::string path;
-        std::string content;
-        bool is_directory{false};
-
-        template<class Archive>
-        void serialize(Archive &archive, const unsigned int) {
-            archive & path;
-            archive & content;
-            archive & is_directory;
-        }
-    };
 };
 
 

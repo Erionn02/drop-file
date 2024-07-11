@@ -67,7 +67,7 @@ void DropFileReceiveClient::validateFileHash(const std::filesystem::path &compre
 void DropFileReceiveClient::handleCompressedFile(bool is_compressed,
                                                  const std::filesystem::path &compressed_file_path) const {
     if (is_compressed) {
-        DirectoryCompressor compressor{std::filesystem::current_path() / compressed_file_path.filename()};
+        DirectoryCompressor compressor{std::filesystem::current_path()};
         compressor.decompress(compressed_file_path);
         std::filesystem::remove(compressed_file_path);
     }

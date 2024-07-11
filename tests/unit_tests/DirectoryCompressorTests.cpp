@@ -4,6 +4,9 @@
 #include "TestHelpers.hpp"
 #include "Utils.hpp"
 
+#include <spdlog/spdlog.h>
+
+
 using namespace ::testing;
 
 struct DirectoryCompressorTests: public Test{
@@ -12,7 +15,6 @@ struct DirectoryCompressorTests: public Test{
     fs::path archive_path {fs::temp_directory_path() / "test_archive"};
     
     void SetUp() override {
-        std::cout<<"Size: " << getDirectorySize("/home/kuba/Documents")<< std::endl;
         deleteTestFiles();
     }
     
@@ -39,6 +41,19 @@ struct DirectoryCompressorTests: public Test{
         }
         fs::create_directories(input_dir_path / "another_nested_dir");
     }
+
+    void createLargeFile() {
+        spdlog::info("Creating large file...");
+        std::ofstream huge_file{input_dir_path / "huge_file.bin", std::ios::binary};
+        std::size_t hundred_mb_size{100ull * 1024ull * 1024ull};
+        auto str = generateRandomString(hundred_mb_size);
+        for(uint i=0; i< 4; ++i) {
+            huge_file << str;
+        }
+        huge_file.flush();
+        spdlog::info("Created large file.");
+    }
+
 };
 
 TEST_F(DirectoryCompressorTests, cannotCompressToArchiveThatAlreadyExists) {
@@ -63,12 +78,13 @@ TEST_F(DirectoryCompressorTests, canCompressAndDecompress) {
     DirectoryCompressor dc1{input_dir_path};
     dc1.compress(archive_path);
 
+    std::filesystem::create_directories(output_dir_path);
     DirectoryCompressor dc2{output_dir_path};
     dc2.decompress(archive_path);
     
     ASSERT_TRUE(fs::exists(archive_path));
-    ASSERT_TRUE(fs::exists(output_dir_path));
-    assertDirectoriesEqual(input_dir_path, output_dir_path);
+    ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));
+    assertDirectoriesEqual(input_dir_path, output_dir_path / input_dir_path.filename());
 }
 
 TEST_F(DirectoryCompressorTests, canCompressAndDecompressEmptyDir) {
@@ -78,9 +94,26 @@ TEST_F(DirectoryCompressorTests, canCompressAndDecompressEmptyDir) {
     dc1.compress(archive_path);
 
     DirectoryCompressor dc2{output_dir_path};
+    std::filesystem::create_directories(output_dir_path);
     dc2.decompress(archive_path);
 
     ASSERT_TRUE(fs::exists(archive_path));
-    ASSERT_TRUE(fs::exists(output_dir_path));
-    assertDirectoriesEqual(input_dir_path, output_dir_path);
+    ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));
+    assertDirectoriesEqual(input_dir_path, output_dir_path / input_dir_path.filename());
+}
+
+TEST_F(DirectoryCompressorTests, canCompressAndDecompressBigDirectory) {
+    setupInputDir();
+    createLargeFile();
+
+    DirectoryCompressor dc1{input_dir_path};
+    dc1.compress(archive_path);
+
+    DirectoryCompressor dc2{output_dir_path};
+    std::filesystem::create_directories(output_dir_path);
+    dc2.decompress(archive_path);
+
+    ASSERT_TRUE(fs::exists(archive_path));
+    ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));
+    assertDirectoriesEqual(input_dir_path, output_dir_path / input_dir_path.filename());
 }
