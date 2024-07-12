@@ -21,12 +21,15 @@ struct DirEntryInfo {
     DirEntryInfo() = default;
     DirEntryInfo(bool is_directory, const fs::path &relative_path);
 
-    bool is_directory;
-    char relative_path[PATH_MAX];
+    bool is_directory{};
+    std::string relative_path{};
     std::size_t compressed_length{0};
 
-    static inline std::size_t PATH_MAX_LEN{PATH_MAX};
-    static inline std::size_t MAX_FILE_LENGTH{1024ull * 1024ull * 1024ull * 4ull}; // 4 GB
+    static DirEntryInfo readFromStream(std::ifstream &stream, std::size_t total_file_length);
+    std::streamsize writeToStream(std::ofstream &stream);
+    void writeCompressedLength(std::ofstream &stream, std::streamsize pos, std::size_t total_written);
+
+    static constexpr std::size_t PATH_MAX_LEN{PATH_MAX};
 };
 #pragma pack(pop)
 
@@ -39,14 +42,10 @@ public:
 
 private:
     void decompressFile(std::ifstream &compressed_file, const DirEntryInfo &entry_info);
-
-    DirEntryInfo readDirEntryInfo(std::ifstream &zip_file, std::size_t total_file_length);
-
     void compressDirectory(const fs::path &dir_to_compress, std::ofstream& compressed_archive,
                            const fs::path &relative_path = "");
     void compressFile(const fs::path &file_path, std::ofstream &compressed_archive, const fs::path &relative_path);
     void addDirectory(std::ofstream &out_file, const fs::path &relative_path);
-    size_t getLeftBytes(std::ifstream &zip_file, size_t total_file_length) const;
 
     static constexpr std::size_t BUFFER_SIZE{1024*1024};
     std::pair<int, std::size_t> compressChunk(std::ofstream &compressed_file, z_stream_s &zs,

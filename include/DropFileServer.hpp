@@ -11,7 +11,6 @@
 #include <filesystem>
 
 using boost::asio::ip::tcp;
-class SessionsManager;
 
 template<class CreatedSession_t = ServerSideClientSession, class SessionsManager_t = SessionsManager>
 class DropFileServer {
