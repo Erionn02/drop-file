@@ -48,8 +48,6 @@ private:
     void addDirectory(std::ofstream &out_file, const fs::path &relative_path);
 
     static constexpr std::size_t BUFFER_SIZE{1024*1024};
-    std::pair<int, std::size_t> compressChunk(std::ofstream &compressed_file, z_stream_s &zs,
-                                              std::array<unsigned char, BUFFER_SIZE> &compression_buffer, int flush);
 
 
     fs::path directory;

@@ -40,6 +40,10 @@ struct DirectoryCompressorTests: public Test{
             file << "Some other content";
         }
         fs::create_directories(input_dir_path / "another_nested_dir");
+
+        std::ofstream empty_file{input_dir_path / "another_nested_dir" / "empty_file"};
+
+        fs::create_directories(input_dir_path / "empty_dir");
     }
 
     void createLargeFile() {

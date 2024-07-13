@@ -1,9 +1,10 @@
 #include "DirectoryCompressor.hpp"
 #include "Utils.hpp"
+#include "gzip.hpp"
 
-#include <zlib.h>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+
 
 size_t getLeftBytes(std::ifstream &zip_file, size_t total_file_length);
 
@@ -31,18 +32,18 @@ void DirectoryCompressor::decompress(const fs::path &compressed_file_path) {
         throw DirectoryCompressorException(
                 fmt::format("Given archive {} does not exists!", compressed_file_path.string()));
     }
-    std::ifstream ifs(compressed_file_path, std::ios_base::binary);
+    std::ifstream compressed_archive(compressed_file_path, std::ios_base::binary);
     std::size_t file_size = std::filesystem::file_size(compressed_file_path);
 
     progress_bar.set_option(indicators::option::PrefixText{"Decompressing..."});
-    while (getLeftBytes(ifs, file_size) > 0) {
-        DirEntryInfo entry_info = DirEntryInfo::readFromStream(ifs, file_size);
+    while (getLeftBytes(compressed_archive, file_size) > 0) {
+        DirEntryInfo entry_info = DirEntryInfo::readFromStream(compressed_archive, file_size);
         spdlog::info("Decompressing, path: {}, compressed size: {}, is_dir: {}", entry_info.relative_path,
                      entry_info.compressed_length, entry_info.is_directory);
         if (entry_info.is_directory) {
             std::filesystem::create_directories(directory / entry_info.relative_path);
         } else {
-            decompressFile(ifs, entry_info);
+            decompressFile(compressed_archive, entry_info);
         }
     }
 
@@ -50,49 +51,14 @@ void DirectoryCompressor::decompress(const fs::path &compressed_file_path) {
     progress_bar.mark_as_completed();
 }
 
-void DirectoryCompressor::decompressFile(std::ifstream &compressed_file, const DirEntryInfo &entry_info) {
-    std::ofstream file{directory / entry_info.relative_path, std::ios::binary};
+void DirectoryCompressor::decompressFile(std::ifstream &compressed_archive, const DirEntryInfo &entry_info) {
+    std::ofstream decompressed_file{directory / entry_info.relative_path, std::ios::binary};
 
-    if (!file.is_open()) {
+    if (!decompressed_file.is_open()) {
         throw DirectoryCompressorException(
-                "Failed to open output file: " + (directory / entry_info.relative_path).string());
+                "Failed to open output decompressed_file: " + (directory / entry_info.relative_path).string());
     }
-
-    std::array<char, BUFFER_SIZE> input_buffer{};
-    std::array<unsigned char, BUFFER_SIZE> decompression_buffer{};
-    z_stream zs{};
-    memset(&zs, 0, sizeof(zs));
-    inflateInit(&zs);
-    std::unique_ptr<z_stream, decltype(&inflateEnd)> stream_guard{&zs, inflateEnd};
-
-
-    zs.next_out = decompression_buffer.data();
-    zs.avail_out = decompression_buffer.size();
-
-    std::size_t total_bytes_read{0};
-    std::size_t bytes_left = entry_info.compressed_length - total_bytes_read;
-    std::size_t this_chunk_size{std::min(BUFFER_SIZE, bytes_left)};
-
-    int ret;
-    do {
-        compressed_file.read(input_buffer.data(), static_cast<std::streamsize>(this_chunk_size));
-        zs.next_in = reinterpret_cast<unsigned char*>(input_buffer.data());
-        zs.avail_in = static_cast<unsigned int>(compressed_file.gcount());
-        total_bytes_read += static_cast<size_t>(compressed_file.gcount());
-        bytes_left = entry_info.compressed_length - total_bytes_read;
-        this_chunk_size = std::min(BUFFER_SIZE, bytes_left);
-        do {
-            zs.next_out = decompression_buffer.data();
-            zs.avail_out = BUFFER_SIZE;
-            ret = inflate(&zs, Z_NO_FLUSH);
-            spdlog::info("Ret: {}", ret);
-            if (ret < 0) {
-                throw DirectoryCompressorException(fmt::format("Decompression error: {}", ret));
-            }
-            file.write(reinterpret_cast<char*>(decompression_buffer.data()), BUFFER_SIZE - zs.avail_out);
-        } while (zs.avail_out == 0);
-
-    } while (bytes_left > 0 && ret != Z_STREAM_END);
+    gzip::decompress(decompressed_file,compressed_archive, entry_info.compressed_length);
 }
 
 void DirectoryCompressor::compress(const fs::path &new_compressed_file_path) {
@@ -133,91 +99,11 @@ void DirectoryCompressor::addDirectory(std::ofstream &out_file, const fs::path &
 
 void DirectoryCompressor::compressFile(const fs::path &file_path, std::ofstream &compressed_archive,
                                        const fs::path &relative_path) {
-    std::ifstream input_file(file_path, std::ios::binary);
-    if (!input_file.is_open()) {
-        throw DirectoryCompressorException("Failed to open input file: " + file_path.string());
-    }
     DirEntryInfo file_info{false, relative_path};
     auto pos_to_write_compressed_size = file_info.writeToStream(compressed_archive);
+    std::size_t bytes_written = gzip::compress(file_path, compressed_archive);
 
-
-    std::array<char, BUFFER_SIZE> input_buffer{};
-    std::array<unsigned char, BUFFER_SIZE> compression_buffer{};
-
-    z_stream zs;
-    memset(&zs, 0, sizeof(zs));
-    deflateInit(&zs, Z_BEST_COMPRESSION);
-    std::unique_ptr<z_stream, decltype(&deflateEnd)> stream_guard{&zs, deflateEnd};
-
-    std::size_t total_written{0};
-    int flush;
-    do {
-        input_file.read(input_buffer.data(), BUFFER_SIZE);
-        zs.next_in = reinterpret_cast<unsigned char *>(input_buffer.data());
-        zs.avail_in = static_cast<unsigned int>(input_file.gcount());
-
-        flush = input_file.eof() ? Z_FINISH : Z_NO_FLUSH;
-
-        do {
-            zs.next_out = compression_buffer.data();
-            zs.avail_out = BUFFER_SIZE;
-
-            auto ret = deflate(&zs, flush);
-            if (ret < 0 ) {
-                throw DirectoryCompressorException(fmt::format("Compression error: {}", ret));
-            }
-            std::size_t bytes_written = BUFFER_SIZE - zs.avail_out;
-            total_written += bytes_written;
-            compressed_archive.write(reinterpret_cast<char *>(compression_buffer.data()),
-                                     static_cast<std::streamsize>(bytes_written));
-        } while (zs.avail_out == 0);
-
-    } while (flush != Z_FINISH);
-
-
-//    std::size_t total_written{0};
-//    while (!input_file.eof()) {
-//        input_file.read(input_buffer.data(), BUFFER_SIZE);
-//        spdlog::info("Read {} bytes.", input_file.gcount());
-//        zs.next_in = reinterpret_cast<unsigned char *>(input_buffer.data());
-//        zs.avail_in = static_cast<unsigned int>(input_file.gcount());
-//
-//        zs.next_out = compression_buffer.data();
-//        zs.avail_out = BUFFER_SIZE;
-//
-//        while (zs.avail_in > 0) {
-//            spdlog::info("zs.avail_in: {}", zs.avail_in);
-//            auto [ret, bytes_written] = compressChunk(compressed_archive, zs, compression_buffer, Z_NO_FLUSH);
-//            spdlog::info("Bytes written: {}, ret_code: {}", bytes_written, ret);
-//            total_written += bytes_written;
-//        }
-//    }
-//
-//    zs.next_in = reinterpret_cast<unsigned char *>(input_buffer.data());
-//    zs.avail_in = 0;
-//    int ret = Z_OK;
-//    while (ret != Z_STREAM_END) {
-//        auto [ret_code, bytes_written] = compressChunk(compressed_archive, zs, compression_buffer, Z_FINISH);
-//        spdlog::info("Bytes written: {}, ret_code: {}", bytes_written, ret_code);
-//        ret = ret_code;
-//        total_written += bytes_written;
-//    }
-
-    file_info.writeCompressedLength(compressed_archive, pos_to_write_compressed_size, total_written);
-}
-
-std::pair<int, std::size_t> DirectoryCompressor::compressChunk(std::ofstream &compressed_file, z_stream &zs,
-                                                               std::array<unsigned char, BUFFER_SIZE> &compression_buffer,
-                                                               int flush) {
-//    progress_bar.tick();
-    zs.next_out = compression_buffer.data();
-    zs.avail_out = static_cast<unsigned int>(compression_buffer.size());
-    int ret = deflate(&zs, flush);
-    std::size_t bytes_written = compression_buffer.size() - zs.avail_out;
-    spdlog::info("Bytes written: {}", bytes_written);
-    compressed_file.write(reinterpret_cast<char *>(compression_buffer.data()),
-                          static_cast<std::streamsize>(bytes_written));
-    return {ret, bytes_written};
+    file_info.writeCompressedLength(compressed_archive, pos_to_write_compressed_size, bytes_written);
 }
 
 DirEntryInfo::DirEntryInfo(bool is_directory, const fs::path &relative_path) : is_directory(
@@ -288,6 +174,7 @@ void DirEntryInfo::writeCompressedLength(std::ofstream &stream, std::streamsize 
     stream.write(std::bit_cast<char *>(&total_written), sizeof(total_written));
     stream.seekp(0, std::ios::end);
     stream.flush();
+    spdlog::info("Total written: {}", total_written);
 }
 
 size_t getLeftBytes(std::ifstream &zip_file, size_t total_file_length) {
