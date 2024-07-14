@@ -42,7 +42,7 @@ struct GzipTests: public Test {
 
 TEST_F(GzipTests, canCompressAndDecompress) {
     std::stringstream output_stream;
-    gzip::compress(input_data_path, output_stream);
+    gzip::compress(input_data_path, output_stream, [] {});
 
     auto compressed_data = output_stream.str();
 
@@ -60,7 +60,7 @@ TEST_F(GzipTests, canCompressAndDecompressWhenEmptyInputData) {
     std::ofstream input_file{input_data_path, std::ios::binary | std::ios::trunc};
 
     std::stringstream output_stream;
-    gzip::compress(input_data_path, output_stream);
+    gzip::compress(input_data_path, output_stream, [] {});
 
     auto compressed_data = output_stream.str();
 

@@ -45,7 +45,7 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
         DirectoryCompressor dir_compressor{dir_entry.path};
         std::filesystem::path new_path = DROP_FILE_SENDER_TMP_DIR / dir_entry.path.filename();
         std::cout << "Compressing to " << new_path << std::endl;
-        dir_compressor.compress(new_path);
+        dir_compressor.createArchive(new_path);
         std::cout << "Compressed!" << std::endl;
         dir_entry = RAIIFSEntry{std::move(new_path), true};
     }

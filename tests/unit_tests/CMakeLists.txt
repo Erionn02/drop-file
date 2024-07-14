@@ -9,6 +9,7 @@ package_add_test(unit_tests
         ClientArgParserTests.cpp
         ServerArgParserTests.cpp
         SessionsManagerTests.cpp
+        DirEntryInfoTests.cpp
         GzipTests.cpp
         DEPENDS drop-file-shared-lib
         )

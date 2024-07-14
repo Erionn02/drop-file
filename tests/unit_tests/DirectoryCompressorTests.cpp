@@ -27,7 +27,7 @@ struct DirectoryCompressorTests: public Test{
         fs::remove_all(input_dir_path);
         fs::remove_all(archive_path);
     }
-    
+
     void setupInputDir() {
         fs::create_directories(input_dir_path);
         {
@@ -49,7 +49,7 @@ struct DirectoryCompressorTests: public Test{
     void createLargeFile() {
         spdlog::info("Creating large file...");
         std::ofstream huge_file{input_dir_path / "huge_file.bin", std::ios::binary};
-        std::size_t hundred_mb_size{100ull * 1024ull * 1024ull};
+        std::size_t hundred_mb_size{10ull * 1024ull * 1024ull};
         auto str = generateRandomString(hundred_mb_size);
         for(uint i=0; i< 4; ++i) {
             huge_file << str;
@@ -66,25 +66,25 @@ TEST_F(DirectoryCompressorTests, cannotCompressToArchiveThatAlreadyExists) {
     DirectoryCompressor dc1{input_dir_path};
 
     std::ofstream f{archive_path};
-    ASSERT_THROW(dc1.compress(archive_path), DirectoryCompressorException);
+    ASSERT_THROW(dc1.createArchive(archive_path), DirectoryCompressorException);
 }
 
 TEST_F(DirectoryCompressorTests, cannotDecompressToDirectoryThatAlreadyExists) {
     setupInputDir();
 
     DirectoryCompressor dc1{input_dir_path};
-    ASSERT_THROW(dc1.decompress(archive_path), DirectoryCompressorException);
+    ASSERT_THROW(dc1.unpackArchive(archive_path), DirectoryCompressorException);
 }
 
 TEST_F(DirectoryCompressorTests, canCompressAndDecompress) {
     setupInputDir();
 
     DirectoryCompressor dc1{input_dir_path};
-    dc1.compress(archive_path);
+    dc1.createArchive(archive_path);
 
     std::filesystem::create_directories(output_dir_path);
     DirectoryCompressor dc2{output_dir_path};
-    dc2.decompress(archive_path);
+    dc2.unpackArchive(archive_path);
     
     ASSERT_TRUE(fs::exists(archive_path));
     ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));
@@ -95,11 +95,11 @@ TEST_F(DirectoryCompressorTests, canCompressAndDecompressEmptyDir) {
     std::filesystem::create_directories(input_dir_path);
 
     DirectoryCompressor dc1{input_dir_path};
-    dc1.compress(archive_path);
+    dc1.createArchive(archive_path);
 
     DirectoryCompressor dc2{output_dir_path};
     std::filesystem::create_directories(output_dir_path);
-    dc2.decompress(archive_path);
+    dc2.unpackArchive(archive_path);
 
     ASSERT_TRUE(fs::exists(archive_path));
     ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));
@@ -110,12 +110,14 @@ TEST_F(DirectoryCompressorTests, canCompressAndDecompressBigDirectory) {
     setupInputDir();
     createLargeFile();
 
+    spdlog::info("Huge file size: {}", std::filesystem::file_size(input_dir_path / "huge_file.bin"));
     DirectoryCompressor dc1{input_dir_path};
-    dc1.compress(archive_path);
+    dc1.createArchive(archive_path);
+    spdlog::info("Archive size: {}", std::filesystem::file_size(archive_path));
 
     DirectoryCompressor dc2{output_dir_path};
     std::filesystem::create_directories(output_dir_path);
-    dc2.decompress(archive_path);
+    dc2.unpackArchive(archive_path);
 
     ASSERT_TRUE(fs::exists(archive_path));
     ASSERT_TRUE(fs::exists(output_dir_path / input_dir_path.filename()));

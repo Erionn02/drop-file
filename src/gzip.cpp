@@ -1,12 +1,14 @@
 #include "gzip.hpp"
+#include "Utils.hpp"
 
 #include <zlib.h>
+#include <spdlog/spdlog.h>
 
 #include <memory>
-#include <array>
 
 
-std::size_t gzip::compress(const std::string &input_path, std::ostream &output_stream) {
+size_t
+gzip::compress(const std::string &input_path, std::ostream &output_stream, std::function<void()> update_callback) {
     std::ifstream input_file(input_path, std::ios::binary);
     if (!input_file.is_open()) {
         throw GzipException("Failed to open input file: " + input_path);
@@ -24,21 +26,37 @@ std::size_t gzip::compress(const std::string &input_path, std::ostream &output_s
     std::array<unsigned char, BUFFER_SIZE> compression_buffer{};
 
     std::size_t bytes_written_to_stream{0};
-    while (!input_file.eof()) {
-        input_file.read(input_buffer.data(), BUFFER_SIZE);
+    while (input_file.read(input_buffer.data(), BUFFER_SIZE).gcount() > 0) {
+        update_callback();
+        bytes_written_to_stream += compressChunk(output_stream, input_file, deflate_stream, input_buffer,
+                                                 compression_buffer, Z_NO_FLUSH);
+    }
+    bytes_written_to_stream += compressChunk(output_stream, input_file, deflate_stream, input_buffer,
+                                             compression_buffer, Z_FINISH);
+
+
+    return bytes_written_to_stream;
+}
+
+size_t gzip::compressChunk(std::ostream &output_stream, const std::ifstream &input_file, z_stream &deflate_stream,
+                           std::array<char, BUFFER_SIZE> &input_buffer,
+                           std::array<unsigned char, BUFFER_SIZE> &compression_buffer, int flush) {
+    std::size_t bytes_written_to_stream{0};
+
+    do
+    {
         deflate_stream.next_in = std::bit_cast<unsigned char *>(input_buffer.data());
         deflate_stream.avail_in = static_cast<unsigned int>(input_file.gcount());
-        do
-        {
-            deflate_stream.avail_out = static_cast<unsigned int>(BUFFER_SIZE);
-            deflate_stream.next_out = compression_buffer.data();
-            deflate(&deflate_stream, Z_FINISH);
-            auto bytes_compressed = BUFFER_SIZE - deflate_stream.avail_out;
-            bytes_written_to_stream+=bytes_compressed;
-            output_stream.write((char*)compression_buffer.data(), static_cast<std::streamsize>(bytes_compressed));
-        } while (deflate_stream.avail_out == 0);
-    }
-
+        deflate_stream.avail_out = static_cast<unsigned int>(BUFFER_SIZE);
+        deflate_stream.next_out = compression_buffer.data();
+        auto ret = deflate(&deflate_stream, flush);
+        if(ret < 0) {
+            throw GzipException(fmt::format("Deflate failed with ret: {}", ret));
+        }
+        auto bytes_compressed = BUFFER_SIZE - deflate_stream.avail_out;
+        bytes_written_to_stream+=bytes_compressed;
+        output_stream.write((char*)compression_buffer.data(), static_cast<std::streamsize>(bytes_compressed));
+    } while (deflate_stream.avail_out == 0);
     return bytes_written_to_stream;
 }
 

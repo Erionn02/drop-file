@@ -15,4 +15,5 @@ add_lib(drop-file-shared-lib
         ${CMAKE_CURRENT_SOURCE_DIR}/DropFileReceiveClient.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/gzip.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/DirEntryInfo.cpp
         )

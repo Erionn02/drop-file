@@ -12,7 +12,6 @@
 #include <cmath>
 
 
-std::string hashToHexString(const std::vector<unsigned char> &hash);
 
 std::string calculateFileHash(const std::filesystem::path &path) {
     constexpr int buffer_size = 8192;
@@ -22,39 +21,39 @@ std::string calculateFileHash(const std::filesystem::path &path) {
     const EVP_MD *md = EVP_sha256();
 
     if (!mdctx) {
-        throw std::runtime_error("Error creating context for hashing.");
+        throw UtilsException("Error creating context for hashing.");
     }
 
     if (EVP_DigestInit_ex(mdctx.get(), md, nullptr) != 1) {
-        throw std::runtime_error("Error initializing digest context.");
+        throw UtilsException("Error initializing digest context.");
     }
 
     std::ifstream file(path, std::ios::binary);
     if (!file) {
-        throw std::runtime_error("Error opening file: " + path.string());
+        throw UtilsException("Error opening file: " + path.string());
     }
 
     while (file.good()) {
         file.read(reinterpret_cast<char *>(buffer.data()), buffer_size);
         if (file.gcount() > 0) {
             if (EVP_DigestUpdate(mdctx.get(), buffer.data(), static_cast<size_t>(file.gcount())) != 1) {
-                throw std::runtime_error("Error updating digest.");
+                throw UtilsException("Error updating digest.");
             }
         }
     }
 
     std::vector<unsigned char> hash_result(static_cast<unsigned long>(EVP_MD_size(md)));
     if (EVP_DigestFinal_ex(mdctx.get(), hash_result.data(), nullptr) != 1) {
-        throw std::runtime_error("Error finalizing digest.");
+        throw UtilsException("Error finalizing digest.");
     }
 
-    return hashToHexString(hash_result);
+    return binaryToHumanReadable({std::bit_cast<char *>(hash_result.data()), hash_result.size()});
 }
 
-std::string hashToHexString(const std::vector<unsigned char> &hash) {
+std::string binaryToHumanReadable(std::string_view data) {
     std::ostringstream hexStr;
-    for (unsigned char byte: hash) {
-        hexStr << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    for (char byte: data) {
+        hexStr << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(std::bit_cast<unsigned char>(byte));
     }
     return hexStr.str();
 }
@@ -107,4 +106,16 @@ indicators::ProgressBar createProgressBar(const std::string &initial_text) {
             option::ShowRemainingTime{true},
             option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
     };
+}
+
+size_t getRemainingBytes(std::istream &zip_file, size_t total_stream_length) {
+    std::streamoff current_position = zip_file.tellg();
+
+    if (zip_file.fail() || current_position < 0) {
+        zip_file.exceptions();
+        throw UtilsException("Could not retrieve stream's current position" );
+    }
+
+    std::size_t remaining_bytes = total_stream_length - static_cast<std::size_t>(current_position);
+    return remaining_bytes;
 }

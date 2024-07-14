@@ -21,7 +21,7 @@ struct UtilsTests : public Test {
 };
 
 TEST_F(UtilsTests, calculateFileHashThrowsOnNonExistentFile) {
-    ASSERT_THROW(calculateFileHash(file_1_path), std::runtime_error);
+    ASSERT_THROW(calculateFileHash(file_1_path), UtilsException);
 }
 
 TEST_F(UtilsTests, sameFileContentOfDifferentFilesResultInSameHash) {
@@ -103,4 +103,32 @@ TEST_F(UtilsTests, sumsWithRecursiveEntries) {
         file << content;
     }
     ASSERT_EQ(getDirectorySize(file_1_path), 2 * SINGLE_DIR_SIZE + content_length * 3);
+}
+
+TEST_F(UtilsTests, getRemainingBytes) {
+    std::size_t content_size{10000};
+    std::string content{generateRandomString(content_size)};
+    {
+        std::ofstream file{file_1_path};
+        file << content;
+    }
+    std::ifstream file{file_1_path};
+
+
+    ASSERT_EQ(getRemainingBytes(file, content_size), content_size);
+}
+
+TEST_F(UtilsTests, getRemainingBytesWithOffset) {
+    std::size_t content_size{10000};
+    std::string content{generateRandomString(content_size)};
+    {
+        std::ofstream file{file_1_path};
+        file << content;
+    }
+    std::ifstream file{file_1_path};
+
+    std::size_t offset = 100;
+    file.seekg(offset);
+
+    ASSERT_EQ(getRemainingBytes(file, content_size), content_size - offset);
 }

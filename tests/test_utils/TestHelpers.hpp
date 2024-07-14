@@ -23,6 +23,29 @@ inline std::string getFileContent(const fs::path& file_path) {
     return ss.str();
 }
 
+inline bool filesContentEqual(const fs::path& p1, const fs::path& p2) {
+    if (std::filesystem::file_size(p1) != std::filesystem::file_size(p2)) {
+        return false;
+    }
+    std::ifstream file1{p1, std::ios::binary};
+    std::ifstream file2{p2, std::ios::binary};
+    constexpr std::size_t BUFFER_SIZE{10000};
+    std::array<char, BUFFER_SIZE> buf1{};
+    std::array<char, BUFFER_SIZE> buf2{};
+    auto size = std::filesystem::file_size(p1);
+    for(std::size_t total_read_each{0}; total_read_each < size; ) {
+        file1.read(buf1.data(), BUFFER_SIZE);
+        file2.read(buf2.data(), BUFFER_SIZE);
+        std::string_view content1{buf1.data(), static_cast<std::size_t>(file1.gcount())};
+        std::string_view content2{buf2.data(), static_cast<std::size_t>(file2.gcount())};
+        if(content1!=content2) {
+            return false;
+        }
+        total_read_each += file1.gcount();
+    }
+    return true;
+}
+
 inline void assertDirectoriesEqual(const fs::path& dir1, const fs::path& dir2) {
     auto dir_entries_1 = getSortedDirEntries(dir1);
     auto dir_entries_2 = getSortedDirEntries(dir2);
@@ -34,7 +57,8 @@ inline void assertDirectoriesEqual(const fs::path& dir1, const fs::path& dir2) {
         if (el1.is_directory()) {
             assertDirectoriesEqual(el1, el2);
         } else {
-            ASSERT_EQ(getFileContent(el1), getFileContent(el2));
+            ASSERT_EQ(std::filesystem::file_size(el1), std::filesystem::file_size(el2));
+            ASSERT_TRUE(filesContentEqual(el1, el2));
         }
     }
 }
