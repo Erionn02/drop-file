@@ -31,7 +31,6 @@ gzip::compress(std::istream &input_stream, std::ostream &output_stream, std::fun
     bytes_written_to_stream += compressChunk(output_stream, input_stream, deflate_stream, input_buffer,
                                              compression_buffer, Z_FINISH);
 
-
     return bytes_written_to_stream;
 }
 

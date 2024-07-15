@@ -28,7 +28,6 @@ public:
 private:
     using PMF =  void (ServerSideClientSession::*)(std::string_view);
     MessageHandler callback(PMF pmf);
-
     void registerSession(nlohmann::json json);
     void handleFirstRead(std::string_view content);
     void receiveFile(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json session_metadata);

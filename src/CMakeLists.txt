@@ -8,12 +8,12 @@ add_lib(drop-file-shared-lib
         ${CMAKE_CURRENT_SOURCE_DIR}/ServerSideClientSession.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/SessionsManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ClientSocket.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/DirectoryCompressor.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArchiveManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ClientArgParser.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ServerArgParser.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/DropFileSendClient.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/DropFileReceiveClient.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/gzip.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/DirEntryInfo.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/FSEntryInfo.cpp
         )

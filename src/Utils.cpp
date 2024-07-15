@@ -12,6 +12,7 @@
 #include <cmath>
 
 
+std::string binaryToHumanReadable(std::string_view data);
 
 std::string calculateFileHash(const std::filesystem::path &path) {
     constexpr int buffer_size = 8192;
@@ -74,26 +75,9 @@ std::string bytesToHumanReadable(std::size_t bytes) {
     }
 }
 
-std::size_t getDirectorySize(const std::filesystem::path &directory) {
-    constexpr std::size_t single_dir_disk_usage{4096};
-
-    std::size_t total_size{single_dir_disk_usage};
-
-    for (const auto &dir_entry: std::filesystem::recursive_directory_iterator(directory)) {
-        if(dir_entry.is_directory()) {
-            total_size += single_dir_disk_usage;
-        } else if (dir_entry.is_regular_file()) {
-            total_size += dir_entry.file_size();
-        }
-    }
-
-    return total_size;
-}
-
 using namespace indicators;
-
-indicators::ProgressBar createProgressBar(const std::string &initial_text) {
-    return indicators::ProgressBar{
+ProgressBar createProgressBar(const std::string &initial_text) {
+    return ProgressBar{
             option::BarWidth{50},
             option::Start{" ["},
             option::Fill{"█"},

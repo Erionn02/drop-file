@@ -54,7 +54,7 @@ std::size_t SocketBase::getMessageLength() {
     boost::asio::mutable_buffer buffer{&message_length, sizeof(message_length)};
     boost::asio::read(socket_, buffer, boost::asio::transfer_exactly(buffer.size()));
     if (message_length > BUFFER_SIZE) {
-        disconnect("Cannot receive message of this size.");
+        safeDisconnect("Cannot receive message of this size.");
         throw SocketException(
                 fmt::format("Somebody is trying to send {} bytes in single message, which is more than allowed ({})",
                             message_length, BUFFER_SIZE));
@@ -150,6 +150,6 @@ void SocketBase::safeDisconnect(std::optional<std::string> disconnect_msg) {
     try {
         disconnect(std::move(disconnect_msg));
     } catch(const std::exception& e) {
-        spdlog::error(e.what());
+        spdlog::warn(e.what());
     }
 }

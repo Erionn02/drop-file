@@ -29,9 +29,9 @@ void ServerSideClientSession::handleFirstRead(std::string_view content) {
         spdlog::debug("[ServerSideClientSession] Session registered.");
     } catch (const SessionsManagerException& e){
         std::this_thread::sleep_for(std::chrono::seconds(3)); // to prevent DDOS
-        disconnect(e.what());
+        safeDisconnect(e.what());
     } catch (const DropFileBaseException &e) {
-        disconnect(e.what());
+        safeDisconnect(e.what());
     } catch (const boost::wrapexcept<boost::system::system_error> &e) {
         spdlog::warn("Boost exception: {}", e.what());
     }
@@ -50,7 +50,7 @@ void ServerSideClientSession::registerSession(nlohmann::json json) {
             receiveFile(std::move(sender), std::move(session_metadata));
         }
     } else {
-        disconnect("Internal error"); // should not ever happen
+        safeDisconnect("Internal error"); // should not ever happen
     }
 }
 

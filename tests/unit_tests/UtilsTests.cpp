@@ -63,48 +63,6 @@ TEST_F(UtilsTests, bytesToHumanReadableTest) {
     ASSERT_EQ(bytesToHumanReadable(number), "123 GiB");
 }
 
-TEST_F(UtilsTests, getDirectorySizeThrowsOnNonExistentDir) {
-    ASSERT_THROW(getDirectorySize(file_1_path), std::filesystem::filesystem_error);
-}
-
-TEST_F(UtilsTests, getDirectorySizeThrowsOnRegularFile) {
-    std::ofstream file{file_1_path};
-    ASSERT_THROW(getDirectorySize(file_1_path), std::filesystem::filesystem_error);
-}
-
-TEST_F(UtilsTests, emptyDirIs4kB) {
-    std::filesystem::create_directories(file_1_path);
-    ASSERT_EQ(getDirectorySize(file_1_path), SINGLE_DIR_SIZE);
-}
-
-TEST_F(UtilsTests, sumsWithFile) {
-    std::filesystem::create_directories(file_1_path);
-    std::size_t content_length{12345};
-    std::string content(content_length, 'a');
-    {
-        std::ofstream file{file_1_path / "file.txt"};
-        file << content;
-    }
-    ASSERT_EQ(getDirectorySize(file_1_path), SINGLE_DIR_SIZE + content_length);
-}
-
-TEST_F(UtilsTests, sumsWithRecursiveEntries) {
-    std::filesystem::create_directories(file_1_path);
-    std::size_t content_length{12345};
-    std::string content(content_length, 'a');
-    {
-        std::ofstream file{file_1_path / "file.txt"};
-        file << content;
-    }
-    std::filesystem::create_directories(file_1_path / "dir");
-    {
-        std::ofstream file{file_1_path / "dir" / "file.txt"};
-        file << content;
-        file << content;
-    }
-    ASSERT_EQ(getDirectorySize(file_1_path), 2 * SINGLE_DIR_SIZE + content_length * 3);
-}
-
 TEST_F(UtilsTests, getRemainingBytes) {
     std::size_t content_size{10000};
     std::string content{generateRandomString(content_size)};

@@ -1,6 +1,6 @@
 #include "DropFileReceiveClient.hpp"
 #include "InitSessionMessage.hpp"
-#include "DirectoryCompressor.hpp"
+#include "ArchiveManager.hpp"
 #include "Utils.hpp"
 
 #include <spdlog/spdlog.h>
@@ -67,7 +67,7 @@ void DropFileReceiveClient::validateFileHash(const std::filesystem::path &compre
 void DropFileReceiveClient::handleCompressedFile(bool is_compressed,
                                                  const std::filesystem::path &compressed_file_path) const {
     if (is_compressed) {
-        DirectoryCompressor compressor{std::filesystem::current_path()};
+        ArchiveManager compressor{std::filesystem::current_path()};
         compressor.unpackArchive(compressed_file_path);
         std::filesystem::remove(compressed_file_path);
     }

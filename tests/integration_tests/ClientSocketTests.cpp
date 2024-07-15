@@ -178,20 +178,5 @@ TEST_F(ClientSocketTest, canSendInPartsMessageBiggerThanBufferSize) {
 TEST_F(ClientSocketTest, cannotAsynchronouslyReadMessageBiggerThanBufferSize) {
     ClientSocket client_socket = createClientSocket();
 
-
     ASSERT_THROW(client_socket.asyncReadMessage(SocketBase::BUFFER_SIZE * 2, [](std::string_view){}), SocketException);
 }
-
-/*
-    boost::asio::io_context io_context{};
-    boost::asio::ssl::context ssl_context{boost::asio::ssl::context::sslv23};
-    boost::asio::ssl::stream<tcp::socket> socket{io_context, ssl_context};
-    tcp::resolver resolver(socket.get_executor());
-    auto endpoints = resolver.resolve(host, std::to_string(port));
-    if (endpoints.empty()) {
-        throw SocketException(fmt::format("Did not find {}:{}", host, port));
-    }
-    socket.lowest_layer().connect(*endpoints.begin());
-    socket.handshake(boost::asio::ssl::stream_base::client);
-    SocketBase test_socket{std::move(socket)};
-*/

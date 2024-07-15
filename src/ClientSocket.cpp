@@ -29,6 +29,15 @@ ClientSocket::ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, 
     });
 }
 
+ClientSocket::~ClientSocket() {
+    if (io_context) {
+        io_context->stop();
+        if (context_thread.joinable()) {
+            context_thread.join();
+        }
+    }
+}
+
 void ClientSocket::connect(const std::string &host, unsigned short port) {
     spdlog::debug("Connecting to the endpoint: {}:{}", host, port);
     tcp::resolver resolver(socket_.get_executor());
@@ -39,16 +48,6 @@ void ClientSocket::connect(const std::string &host, unsigned short port) {
     socket_.lowest_layer().connect(*endpoints.begin());
     socket_.handshake(boost::asio::ssl::stream_base::client);
     spdlog::debug("Connected to the endpoint {}:{}.", host, port);
-}
-
-
-ClientSocket::~ClientSocket() {
-    if (io_context) {
-        io_context->stop();
-        if (context_thread.joinable()) {
-            context_thread.join();
-        }
-    }
 }
 
 void ClientSocket::start() {

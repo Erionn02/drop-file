@@ -1,8 +1,8 @@
 #pragma once
 
-#include <filesystem>
-
 #include <spdlog/spdlog.h>
+
+#include <filesystem>
 
 
 struct RAIIFSEntry {

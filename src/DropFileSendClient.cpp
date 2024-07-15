@@ -1,6 +1,6 @@
 #include "DropFileSendClient.hpp"
 #include "InitSessionMessage.hpp"
-#include "DirectoryCompressor.hpp"
+#include "ArchiveManager.hpp"
 #include "Utils.hpp"
 
 #include <spdlog/spdlog.h>
@@ -42,7 +42,7 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
     bool should_compress = std::filesystem::is_directory(path);
     RAIIFSEntry dir_entry{path, false};
     if (should_compress) {
-        DirectoryCompressor dir_compressor{dir_entry.path};
+        ArchiveManager dir_compressor{dir_entry.path};
         std::filesystem::path new_path = DROP_FILE_SENDER_TMP_DIR / dir_entry.path.filename();
         std::cout << "Compressing to " << new_path << std::endl;
         dir_compressor.createArchive(new_path);
