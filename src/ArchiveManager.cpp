@@ -34,7 +34,6 @@ void ArchiveManager::unpackArchive(const fs::path &archive_path) {
     progress_bar.set_option(indicators::option::PrefixText{"Unpacking... "});
     while (getRemainingBytes(compressed_archive, archive_size) > 0) {
         FSEntryInfo entry_info = FSEntryInfo::readFromStream(compressed_archive, archive_size);
-        progress_bar.set_option(indicators::option::PostfixText{std::filesystem::path(entry_info.relative_path).filename().string()});
         progress_bar.tick();
         if (entry_info.is_directory) {
             std::filesystem::create_directories(directory / entry_info.relative_path);
@@ -43,7 +42,6 @@ void ArchiveManager::unpackArchive(const fs::path &archive_path) {
         }
     }
 
-    progress_bar.set_option(indicators::option::PostfixText{""});
     progress_bar.set_option(indicators::option::PrefixText{"Unpacked. "});
     progress_bar.mark_as_completed();
 }
@@ -65,11 +63,11 @@ void ArchiveManager::createArchive(const fs::path &new_archive_path) {
                             new_archive_path.string()));
     }
     std::ofstream new_archive(new_archive_path, std::ios::binary | std::ios::trunc);
-    progress_bar.set_option(indicators::option::PrefixText{"Compressing directory... "});
+    progress_bar.set_option(indicators::option::PrefixText{"Archiving directory... "});
 
     packDirectory(directory, new_archive, directory.filename());
 
-    progress_bar.set_option(indicators::option::PrefixText{"Directory compressed. "});
+    progress_bar.set_option(indicators::option::PrefixText{"Directory archived. "});
     progress_bar.mark_as_completed();
 }
 
@@ -102,11 +100,9 @@ void ArchiveManager::addFile(const fs::path &file_path, std::ofstream &compresse
     if (!input_file.is_open()) {
         throw ArchiveManagerException("Failed to open input file: " + file_path.string());
     }
-    progress_bar.set_option(indicators::option::PostfixText{fmt::format("Compressing file {}.", file_path.filename().string())});
     std::size_t bytes_written = gzip::compress(input_file, compressed_archive, [&] {
         progress_bar.tick();
     });
 
     file_info.writeCompressedLength(compressed_archive, pos_to_write_compressed_size, bytes_written);
-    progress_bar.set_option(indicators::option::PostfixText{fmt::format("Compressed file {}. ", file_path.filename().string())});
 }

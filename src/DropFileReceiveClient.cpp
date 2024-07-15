@@ -109,7 +109,7 @@ DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_rece
 void DropFileReceiveClient::assertJsonProperties(const nlohmann::json &json) {
     std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
     if (std::filesystem::exists(filename)) {
-        throw DropFileReceiveException(fmt::format("{} already exist!", filename));
+        throw DropFileReceiveException(fmt::format("Directory {} already exists!", filename));
     }
     bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
 

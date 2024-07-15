@@ -23,7 +23,6 @@ public:
 class SessionsManager {
 public:
     SessionsManager();
-
     SessionsManager(std::chrono::seconds client_timeout, std::chrono::seconds check_interval);
 
     std::string registerSender(std::shared_ptr<ServerSideClientSession> sender,
@@ -32,7 +31,7 @@ public:
 
     std::size_t currentSessions();
 private:
-    std::string generateSessionID(std::size_t length);
+    std::string generateSessionID();
     void terminateTimeoutClients(std::chrono::seconds client_timeout);
 
     struct TimedClientSession {
@@ -41,6 +40,8 @@ private:
         std::chrono::time_point<std::chrono::system_clock> time_point;
     };
 
+    std::vector<std::string> nouns;
+    std::vector<std::string> adjectives;
     std::mutex m;
     std::unordered_map<std::string, TimedClientSession> senders_sessions;
     std::jthread connections_controller;

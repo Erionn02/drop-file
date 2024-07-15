@@ -1,15 +1,23 @@
 #include "SessionsManager.hpp"
 #include "ServerSideClientSession.hpp"
 #include "InitSessionMessage.hpp"
+#include "Utils.hpp"
+#include "JsonWords.hpp"
 
 #include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 #include <random>
+#include <fstream>
+#include <filesystem>
 
+SessionsManager::SessionsManager() : SessionsManager(DEFAULT_CLIENT_TIMEOUT,
+                                                     DEFAULT_CHECK_INTERVAL) {}
 
-SessionsManager::SessionsManager() : SessionsManager(DEFAULT_CLIENT_TIMEOUT, DEFAULT_CHECK_INTERVAL) {}
-
-SessionsManager::SessionsManager(std::chrono::seconds client_timeout, std::chrono::seconds check_interval) {
+SessionsManager::SessionsManager(std::chrono::seconds client_timeout,
+                                 std::chrono::seconds check_interval) : nouns(extractWords(WORDS_JSON, "nouns")),
+                                                                        adjectives(extractWords(WORDS_JSON,
+                                                                                                "adjectives")) {
     connections_controller = std::jthread{[client_timeout, check_interval, this](const std::stop_token &stop_token) {
         while (!stop_token.stop_requested()) {
             terminateTimeoutClients(client_timeout);
@@ -33,11 +41,16 @@ void SessionsManager::terminateTimeoutClients(std::chrono::seconds client_timeou
 }
 
 std::string SessionsManager::registerSender(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json json) {
-    std::unique_lock lock{m};
-    auto session_id = generateSessionID(SESSION_ID_LENGTH);
-    senders_sessions[session_id] = {.client_session = std::move(sender), .session_data = std::move(json),
-            .time_point = std::chrono::high_resolution_clock::now()};
-    return session_id;
+    while (true) {
+        auto session_id = generateSessionID();
+        std::unique_lock lock{m};
+        if (senders_sessions.contains(session_id)) {
+            continue;
+        }
+        senders_sessions[session_id] = {.client_session = std::move(sender), .session_data = std::move(json),
+                .time_point = std::chrono::high_resolution_clock::now()};
+        return session_id;
+    }
 }
 
 std::pair<std::shared_ptr<ServerSideClientSession>, nlohmann::json>
@@ -51,21 +64,8 @@ SessionsManager::getSenderWithMetadata(const std::string &session_code) {
     return {std::move(node.mapped().client_session), std::move(node.mapped().session_data)};
 }
 
-std::string SessionsManager::generateSessionID(std::size_t length) {
-    static auto &chrs = "0123456789"
-                        "abcdefghijklmnopqrstuvwxyz"
-                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    static thread_local std::mt19937 rg{std::random_device{}()};
-    static thread_local std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(chrs) - 2);
-
-    std::string random_str;
-    random_str.reserve(length);
-    while (length--) {
-        random_str += chrs[pick(rg)];
-    }
-
-    return random_str;
+std::string SessionsManager::generateSessionID() {
+    return fmt::format("{}-{}-{}", pickRandom(adjectives), pickRandom(nouns), getRandom(0, 100));
 }
 
 std::size_t SessionsManager::currentSessions() {

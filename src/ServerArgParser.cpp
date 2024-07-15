@@ -21,7 +21,9 @@ ServerArgs parseServerArgs(int argc, char **argv) {
             .scan<'u', unsigned int>()
             .help("Amount of seconds that server keeps the sender's connection alive before returned code is entered on another device.");
 
-
+    program.add_argument("-w", "--json_words")
+            .default_value(static_cast<unsigned int>(ServerArgs::DEFAULT_CLIENT_TIMEOUT.count()))
+            .help(R"(Path to the json file of this structure: { "nouns" : [...], "adjectives": [...] })");
 
     try {
         program.parse_args(argc, argv);

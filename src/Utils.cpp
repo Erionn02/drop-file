@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <memory>
 #include <cmath>
+#include <random>
 
 
 std::string binaryToHumanReadable(std::string_view data);
@@ -102,4 +103,15 @@ size_t getRemainingBytes(std::istream &zip_file, size_t total_stream_length) {
 
     std::size_t remaining_bytes = total_stream_length - static_cast<std::size_t>(current_position);
     return remaining_bytes;
+}
+
+std::size_t getRandom(std::size_t a, std::size_t b) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::size_t> dis(a, b);
+    return dis(gen);
+}
+
+std::string pickRandom(const std::vector<std::string>& elements) {
+    return elements.at(getRandom(0, elements.size() - 1));
 }
