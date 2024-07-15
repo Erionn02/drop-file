@@ -15,16 +15,16 @@ DirEntryInfo::DirEntryInfo(bool is_directory, const std::filesystem::path &relat
     this->relative_path = std::move(path_str);
 }
 
-DirEntryInfo DirEntryInfo::readFromStream(std::istream &stream, std::size_t total_file_length) {
+DirEntryInfo DirEntryInfo::readFromStream(std::istream &stream, std::size_t total_stream_size) {
     DirEntryInfo entry_info;
     stream.read(std::bit_cast<char *>(&entry_info.is_directory), sizeof(entry_info.is_directory));
     if (stream.gcount() != sizeof(entry_info.is_directory)) {
-        throw DirEntryInfoException("Could read type of dir entry.");
+        throw DirEntryInfoException("Could not read type of dir entry.");
     }
     std::size_t path_length{};
     stream.read(std::bit_cast<char *>(&path_length), sizeof(path_length));
     if (stream.gcount() != sizeof(path_length)) {
-        throw DirEntryInfoException("Could read path length.");
+        throw DirEntryInfoException("Could not read path length.");
     }
     if (path_length > PATH_MAX_LEN) {
         throw DirEntryInfoException(
@@ -33,15 +33,15 @@ DirEntryInfo DirEntryInfo::readFromStream(std::istream &stream, std::size_t tota
     entry_info.relative_path.resize(path_length);
     stream.read(entry_info.relative_path.data(), static_cast<std::streamsize>(path_length));
     if (stream.gcount() != static_cast<std::streamsize>(path_length)) {
-        throw DirEntryInfoException("Could read whole path.");
+        throw DirEntryInfoException("Could not read whole path.");
     }
 
     stream.read(std::bit_cast<char *>(&entry_info.compressed_length), sizeof(entry_info.compressed_length));
     if (stream.gcount() != sizeof(entry_info.compressed_length)) {
-        throw DirEntryInfoException("Could read compressed length.");
+        throw DirEntryInfoException("Could not read compressed length.");
     }
 
-    size_t left_size = getRemainingBytes(stream, total_file_length);
+    size_t left_size = getRemainingBytes(stream, total_stream_size);
     if (entry_info.compressed_length > left_size) {
         throw DirEntryInfoException(
                 fmt::format("Entry's size exceeds remaining data's size ({} > {})", entry_info.compressed_length,
@@ -59,9 +59,6 @@ std::streamsize DirEntryInfo::writeToStream(std::ostream &stream) {
     }
     stream.write(std::bit_cast<char *>(&path_len), sizeof(path_len));
     stream.write(relative_path.c_str(), static_cast<std::streamsize>(path_len));
-    if (is_directory) {
-        compressed_length = 0;
-    }
     auto pos_to_write_compressed_size = stream.tellp();
     stream.write(std::bit_cast<char *>(&compressed_length), sizeof(compressed_length));
     return pos_to_write_compressed_size;

@@ -49,9 +49,9 @@ struct DirectoryCompressorTests: public Test{
     void createLargeFile() {
         spdlog::info("Creating large file...");
         std::ofstream huge_file{input_dir_path / "huge_file.bin", std::ios::binary};
-        std::size_t hundred_mb_size{10ull * 1024ull * 1024ull};
+        std::size_t hundred_mb_size{100ull * 1024ull * 1024ull};
         auto str = generateRandomString(hundred_mb_size);
-        for(uint i=0; i< 4; ++i) {
+        for(uint i=0; i< 15; ++i) {
             huge_file << str;
         }
         huge_file.flush();

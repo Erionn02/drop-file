@@ -3,7 +3,6 @@
 #include "gzip.hpp"
 
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
 
 
 DirectoryCompressor::DirectoryCompressor(fs::path directory) : directory(std::move(directory)),
@@ -32,11 +31,11 @@ void DirectoryCompressor::unpackArchive(const fs::path &archive_path) {
     std::ifstream compressed_archive(archive_path, std::ios_base::binary);
     std::size_t archive_size = std::filesystem::file_size(archive_path);
 
-    progress_bar.set_option(indicators::option::PrefixText{"Unpacking..."});
+    progress_bar.set_option(indicators::option::PrefixText{"Unpacking... "});
     while (getRemainingBytes(compressed_archive, archive_size) > 0) {
         DirEntryInfo entry_info = DirEntryInfo::readFromStream(compressed_archive, archive_size);
-        spdlog::info("Decompressing, path: {}, compressed size: {}, is_dir: {}", entry_info.relative_path,
-                     entry_info.compressed_length, entry_info.is_directory);
+        progress_bar.set_option(indicators::option::PostfixText{std::filesystem::path(entry_info.relative_path).filename().string()});
+        progress_bar.tick();
         if (entry_info.is_directory) {
             std::filesystem::create_directories(directory / entry_info.relative_path);
         } else {
@@ -44,7 +43,8 @@ void DirectoryCompressor::unpackArchive(const fs::path &archive_path) {
         }
     }
 
-    progress_bar.set_option(indicators::option::PrefixText{"Unpacked."});
+    progress_bar.set_option(indicators::option::PostfixText{""});
+    progress_bar.set_option(indicators::option::PrefixText{"Unpacked. "});
     progress_bar.mark_as_completed();
 }
 
@@ -55,7 +55,7 @@ void DirectoryCompressor::decompressFile(std::ifstream &compressed_archive, cons
         throw DirectoryCompressorException(
                 "Failed to open output decompressed_file: " + (directory / entry_info.relative_path).string());
     }
-    gzip::decompress(decompressed_file,compressed_archive, entry_info.compressed_length);
+    gzip::decompress(decompressed_file, compressed_archive, entry_info.compressed_length);
 }
 
 void DirectoryCompressor::createArchive(const fs::path &new_archive_path) {
@@ -65,11 +65,11 @@ void DirectoryCompressor::createArchive(const fs::path &new_archive_path) {
                             new_archive_path.string()));
     }
     std::ofstream new_archive(new_archive_path, std::ios::binary | std::ios::trunc);
-    progress_bar.set_option(indicators::option::PrefixText{"Compressing directory..."});
+    progress_bar.set_option(indicators::option::PrefixText{"Compressing directory... "});
 
     compressDirectory(directory, new_archive, directory.filename());
 
-    progress_bar.set_option(indicators::option::PrefixText{"Directory compressed."});
+    progress_bar.set_option(indicators::option::PrefixText{"Directory compressed. "});
     progress_bar.mark_as_completed();
 }
 
@@ -98,9 +98,15 @@ void DirectoryCompressor::compressFile(const fs::path &file_path, std::ofstream 
                                        const fs::path &relative_path) {
     DirEntryInfo file_info{false, relative_path};
     auto pos_to_write_compressed_size = file_info.writeToStream(compressed_archive);
-    std::size_t bytes_written = gzip::compress(file_path, compressed_archive, [&] {
+    std::ifstream input_file{file_path, std::ios::binary};
+    if (!input_file.is_open()) {
+        throw DirectoryCompressorException("Failed to open input file: " + file_path.string());
+    }
+    progress_bar.set_option(indicators::option::PostfixText{fmt::format("Compressing file {}.", file_path.filename().string())});
+    std::size_t bytes_written = gzip::compress(input_file, compressed_archive, [&] {
         progress_bar.tick();
     });
 
     file_info.writeCompressedLength(compressed_archive, pos_to_write_compressed_size, bytes_written);
+    progress_bar.set_option(indicators::option::PostfixText{fmt::format("Compressed file {}. ", file_path.filename().string())});
 }

@@ -85,7 +85,7 @@ TEST_F(DropFileServerIntegrationTests, doesNotSendFileWhenUserDoesNotConfirm) {
 
     auto [fs_entry, receive_code] = send_client.sendFSEntryMetadata(TEST_FILE_PATH);
 
-    ASSERT_DEATH(recv_client.receiveFile(receive_code), "Entered 'n', aborting.");
+    ASSERT_THROW(recv_client.receiveFile(receive_code), DropFileReceiveException);
 }
 
 TEST_F(DropFileServerIntegrationTests, canSendAndReceiveFile) {

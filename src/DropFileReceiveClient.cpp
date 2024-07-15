@@ -78,9 +78,8 @@ void DropFileReceiveClient::getUserConfirmation() {
     char confirmation{};
     interaction_stream >> confirmation;
     if (confirmation != 'y') {
-        std::cerr << fmt::format("Entered '{}', aborting.", confirmation) << std::endl;
         socket.SocketBase::send("abort");
-        exit(1);
+        throw DropFileReceiveException(fmt::format("Entered '{}', aborting.", confirmation));
     }
     std::cout << "Sending confirmation..." << std::endl;
     socket.SocketBase::sendACK();

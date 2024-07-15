@@ -19,7 +19,7 @@ struct DirEntryInfo {
     DirEntryInfo(bool is_directory, const std::filesystem::path &relative_path);
     bool operator==(const DirEntryInfo&) const = default;
 
-    static DirEntryInfo readFromStream(std::istream &stream, std::size_t total_file_length);
+    static DirEntryInfo readFromStream(std::istream &stream, std::size_t total_stream_size);
     std::streamsize writeToStream(std::ostream &stream);
     void writeCompressedLength(std::ostream &stream, std::streamsize pos, std::size_t total_written);
 

@@ -5,17 +5,15 @@
 
 #include <filesystem>
 #include <fstream>
+#include <spdlog/spdlog.h>
 
 
 using namespace ::testing;
 
 
-
 struct GzipTests: public Test {
-    const std::filesystem::path compressed_data_path{std::filesystem::temp_directory_path() / "compressed_data.gz"};
-    const std::filesystem::path decompressed_data_path{std::filesystem::temp_directory_path() / "decompressed_data"};
     const std::filesystem::path input_data_path{std::filesystem::temp_directory_path() / "input_data"};
-    std::string input_data{generateRandomString(1000000)};
+    std::string input_data{generateRandomString(1'000'000)};
 
     void SetUp() override {
         std::ofstream input_file{input_data_path, std::ios::binary | std::ios::trunc};
@@ -23,26 +21,16 @@ struct GzipTests: public Test {
     }
 
     void TearDown() override {
-        std::filesystem::remove(compressed_data_path);
-        std::filesystem::remove(decompressed_data_path);
         std::filesystem::remove(input_data_path);
     }
-
-    std::string decompress(std::size_t size) {
-        std::ifstream f{compressed_data_path, std::ios::binary};
-        std::stringstream decompressed_data_stream{};
-        gzip::decompress(decompressed_data_stream, f, size);
-
-        return decompressed_data_stream.str();
-    }
-
 };
 
 
 
 TEST_F(GzipTests, canCompressAndDecompress) {
     std::stringstream output_stream;
-    gzip::compress(input_data_path, output_stream, [] {});
+    std::ifstream input_file{input_data_path, std::ios::binary};
+    gzip::compress(input_file, output_stream);
 
     auto compressed_data = output_stream.str();
 
@@ -55,12 +43,30 @@ TEST_F(GzipTests, canCompressAndDecompress) {
     ASSERT_EQ(decompressed_data_stream.str(), input_data);
 }
 
+TEST_F(GzipTests, canCompressAndDecompressLargeAmountsOfData) {
+    std::stringstream output_stream;
+    std::stringstream input_stream;
+    input_data = generateRandomString(300'000'000); // 300 MB
+    input_stream << input_data;
+    gzip::compress(input_stream, output_stream);
+
+    auto compressed_data = output_stream.str();
+
+    std::stringstream compressed_data_stream{};
+    std::stringstream decompressed_data_stream{};
+
+    compressed_data_stream << compressed_data;
+    gzip::decompress(decompressed_data_stream, compressed_data_stream, compressed_data.size());
+
+    ASSERT_EQ(decompressed_data_stream.str(), input_data);
+}
+
 TEST_F(GzipTests, canCompressAndDecompressWhenEmptyInputData) {
     input_data = "";
-    std::ofstream input_file{input_data_path, std::ios::binary | std::ios::trunc};
+    std::fstream input_file{input_data_path, std::ios::binary | std::ios::trunc};
 
     std::stringstream output_stream;
-    gzip::compress(input_data_path, output_stream, [] {});
+    gzip::compress(input_file, output_stream);
 
     auto compressed_data = output_stream.str();
 
