@@ -7,15 +7,15 @@
 
 ArchiveManager::ArchiveManager(fs::path directory) : directory(std::move(directory)),
                                                      progress_bar(indicators::option::BarWidth{40},
-                                                                            indicators::option::Start{"["},
-                                                                            indicators::option::Fill{"·"},
-                                                                            indicators::option::Lead{"<==>"},
-                                                                            indicators::option::End{"]"},
-                                                                            indicators::option::ForegroundColor{
-                                                                                    indicators::Color::yellow},
-                                                                            indicators::option::FontStyles{
-                                                                                    std::vector<indicators::FontStyle>{
-                                                                                            indicators::FontStyle::bold}}) {}
+                                                                  indicators::option::Start{"["},
+                                                                  indicators::option::Fill{"·"},
+                                                                  indicators::option::Lead{"<==>"},
+                                                                  indicators::option::End{"]"},
+                                                                  indicators::option::ForegroundColor{
+                                                                          indicators::Color::white},
+                                                                  indicators::option::FontStyles{
+                                                                          std::vector<indicators::FontStyle>{
+                                                                                  indicators::FontStyle::bold}}) {}
 
 
 void ArchiveManager::unpackArchive(const fs::path &archive_path) {

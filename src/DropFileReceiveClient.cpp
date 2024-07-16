@@ -45,7 +45,7 @@ nlohmann::json DropFileReceiveClient::getServerResponse() {
         bool is_compressed = json[InitSessionMessage::IS_COMPRESSED_KEY].get<bool>();
         std::string filename = json[InitSessionMessage::FILENAME_KEY].get<std::string>();
         std::size_t file_size = json[InitSessionMessage::FILE_SIZE_KEY].get<std::size_t>();
-        std::cout << (is_compressed ? "Directory" : "File") << " to receive: " << filename << std::endl;
+        std::cout << (is_compressed ? "Archive" : "File") << " to receive: " << filename << std::endl;
         std::cout << (is_compressed ? "Compressed size: " : "Size: ") << bytesToHumanReadable(file_size) << std::endl;
         assertJsonProperties(json);
         return json;
@@ -81,7 +81,6 @@ void DropFileReceiveClient::getUserConfirmation() {
         socket.SocketBase::send("abort");
         throw DropFileReceiveException(fmt::format("Entered '{}', aborting.", confirmation));
     }
-    std::cout << "Sending confirmation..." << std::endl;
     socket.SocketBase::sendACK();
 }
 

@@ -22,7 +22,7 @@ SendFileAndReceiveCode DropFileSendClient::sendFSEntryMetadata(const std::string
     std::cout << "Requesting DropFileServer for unique receive code..." << std::endl;
     socket.SocketBase::send(message_json.dump());
     std::string receive_code = getReceiveCodeFromServer();
-    std::cout << fmt::format("Enter on another device: './drop-file receive {}'", receive_code) << std::endl;
+    std::cout << fmt::format("Enter on another device: 'drop-file receive {}'", receive_code) << std::endl;
     return {std::move(fs_entry), std::move(receive_code)};
 }
 

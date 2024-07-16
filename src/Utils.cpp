@@ -86,7 +86,7 @@ ProgressBar createProgressBar(const std::string &initial_text) {
             option::Remainder{"-"},
             option::End{"]"},
             option::PrefixText{initial_text},
-            option::ForegroundColor{Color::yellow},
+            option::ForegroundColor{Color::white},
             option::ShowElapsedTime{true},
             option::ShowRemainingTime{true},
             option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}

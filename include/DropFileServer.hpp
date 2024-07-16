@@ -6,6 +6,7 @@
 #include <boost/asio/ssl/context_base.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
@@ -42,12 +43,13 @@ private:
         acceptor_.async_accept(
                 [this](const boost::system::error_code &error, tcp::socket socket) {
                     if (!error) {
-                        spdlog::info("Got new connection...");
+                        auto endpoint = boost::lexical_cast<std::string>(socket.remote_endpoint());
+                        spdlog::info("[DropFileServer] Got new connection, endpoint: {}", endpoint);
                         try {
                             std::make_shared<CreatedSession_t>(std::move(socket), context_,
                                                                       std::weak_ptr{session_manager})->start();
                         } catch(const std::exception& e) {
-                            spdlog::error("Encountered an unexpected exception while accepting new connection: {}", e.what());
+                            spdlog::error("[DropFileServer] Encountered an unexpected exception while accepting new connection: {}", e.what());
                         }
                     }
 

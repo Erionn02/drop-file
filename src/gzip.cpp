@@ -12,9 +12,9 @@ gzip::compress(std::istream &input_stream, std::ostream &output_stream, std::fun
     z_stream deflate_stream{};
     std::unique_ptr<z_stream, decltype(&deflateEnd)> stream_guard{&deflate_stream, deflateEnd};
     constexpr int window_bits = 31;
-    constexpr int memory_level = 7; // [1,9], the bigger -> the faster
+    constexpr int memory_level = 9; // [1,9], the bigger -> the faster
 
-    if (deflateInit2(&deflate_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, window_bits, memory_level,
+    if (deflateInit2(&deflate_stream, Z_BEST_SPEED, Z_DEFLATED, window_bits, memory_level,
                      Z_DEFAULT_STRATEGY) != Z_OK) {
         throw GzipException("Deflate init failed");
     }

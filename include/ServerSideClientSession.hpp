@@ -32,7 +32,7 @@ private:
     void handleFirstRead(std::string_view content);
     void receiveFile(std::shared_ptr<ServerSideClientSession> sender, nlohmann::json session_metadata);
 
-
     std::weak_ptr<SessionsManager> sessions_manager;
+    std::string endpoint;
     static constexpr std::size_t MAX_FIRST_MESSAGE_SIZE{1000};
 };

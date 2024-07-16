@@ -5,7 +5,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <spdlog/spdlog.h>
 
 
 using namespace ::testing;
