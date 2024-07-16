@@ -44,9 +44,7 @@ std::pair<RAIIFSEntry, bool> DropFileSendClient::compressIfNecessary(const std::
     if (should_compress) {
         ArchiveManager dir_compressor{dir_entry.path};
         std::filesystem::path new_path = DROP_FILE_SENDER_TMP_DIR / dir_entry.path.filename();
-        std::cout << "Compressing to " << new_path << std::endl;
         dir_compressor.createArchive(new_path);
-        std::cout << "Compressed!" << std::endl;
         dir_entry = RAIIFSEntry{std::move(new_path), true};
     }
     return {std::move(dir_entry), should_compress};
@@ -68,8 +66,8 @@ void DropFileSendClient::sendFSEntry(RAIIFSEntry data_source) {
             total_bytes_read += static_cast<std::size_t>(bytes_read);
             socket.SocketBase::send({buffer_ptr, static_cast<std::size_t>(bytes_read)});
             progress_bar.set_progress(100 * total_bytes_read / file_size);
-            socket.SocketBase::receiveACK();
         }
     } while (bytes_read > 0);
+    socket.SocketBase::receiveACK();
     progress_bar.set_option(indicators::option::PrefixText{"File sent."});
 }

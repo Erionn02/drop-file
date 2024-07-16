@@ -99,9 +99,9 @@ DropFileReceiveClient::receiveFileImpl(const std::filesystem::path &file_to_rece
         std::size_t write_size = std::min(left_to_transfer, data.size());
         received_file.write(data.data(), static_cast<std::streamsize>(write_size));
         total_transferred_bytes += write_size;
-        socket.SocketBase::sendACK();
         progress_bar.set_progress(100 * total_transferred_bytes / expected_bytes);
     }
+    socket.SocketBase::sendACK();
     received_file.flush();
     progress_bar.set_option(indicators::option::PrefixText{"File received."});
 }

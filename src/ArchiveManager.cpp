@@ -63,11 +63,11 @@ void ArchiveManager::createArchive(const fs::path &new_archive_path) {
                             new_archive_path.string()));
     }
     std::ofstream new_archive(new_archive_path, std::ios::binary | std::ios::trunc);
-    progress_bar.set_option(indicators::option::PrefixText{"Archiving directory... "});
+    progress_bar.set_option(indicators::option::PrefixText{"Building archive... "});
 
     packDirectory(directory, new_archive, directory.filename());
 
-    progress_bar.set_option(indicators::option::PrefixText{"Directory archived. "});
+    progress_bar.set_option(indicators::option::PrefixText{"Archive built. "});
     progress_bar.mark_as_completed();
 }
 

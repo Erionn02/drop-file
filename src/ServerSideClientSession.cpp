@@ -68,11 +68,11 @@ ServerSideClientSession::receiveFile(std::shared_ptr<ServerSideClientSession> se
         std::size_t left_to_transfer = expected_bytes - total_received_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
         SocketBase::send(std::string_view{data.data(), write_size});
-        SocketBase::receiveACK();
 
         total_received_bytes += write_size;
-        sender->sendACK();
     }
+    SocketBase::receiveACK();
+    sender->sendACK();
 }
 
 SocketBase::MessageHandler ServerSideClientSession::callback(ServerSideClientSession::PMF pmf) {
