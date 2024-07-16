@@ -25,6 +25,17 @@ ClientArgs parseClientArgs(int argc, char **argv) {
             .required()
             .help("Either path to file to send or code words to receive file.");
 
+    program.add_argument("-p", "--port")
+            .default_value(std::uint16_t{12345})
+            .scan<'u', unsigned short>()
+            .help("Server port");
+
+    program.add_argument("-d", "--domain_name")
+            .default_value("localhost")
+            .help("Server domain name or ip address for self-hosted");
+
+    program.add_argument("--path_to_server_cert_file")
+            .help("Path to server's self-signed certificate (only for self-hosted server)");
 
     try {
         program.parse_args(argc, argv);
@@ -37,13 +48,21 @@ ClientArgs parseClientArgs(int argc, char **argv) {
     auto action = program.get<std::string>("action");
     auto file_or_code = program.get<std::string>("file_or_code");
 
+
+
     if (action == "send") {
         removeTrailingSlashes(file_or_code);
         return {.action = Action::send,
-                .file_to_send_path = file_or_code};
+                .file_to_send_path = file_or_code,
+                .port = program.get<unsigned short>("-p"),
+                .server_domain_name = program.get<std::string>("-d"),
+                .path_to_server_cert_file = program.present("--path_to_server_cert_file")};
     } else {
         return {.action = Action::receive,
-                .receive_code = file_or_code};
+                .receive_code = file_or_code,
+                .port = program.get<unsigned short>("-p"),
+                .server_domain_name = program.get<std::string>("-d"),
+                .path_to_server_cert_file = program.present("--path_to_server_cert_file")};
     }
 }
 

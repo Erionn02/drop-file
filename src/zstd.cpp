@@ -29,7 +29,7 @@ zstd::compress(std::istream &input_stream, std::ostream &output_stream, std::fun
     std::size_t bytes_written_to_stream{0};
     while (input_stream.read(read_buffer.data(), static_cast<std::streamsize>(read_buffer.size())).gcount() > 0) {
         auto read = static_cast<std::size_t>(input_stream.gcount());
-        bool is_last_chunk = input_stream.gcount() < read_buffer.size();
+        bool is_last_chunk = read < read_buffer.size();
 
         const ZSTD_EndDirective mode = is_last_chunk ? ZSTD_e_end : ZSTD_e_continue;
         ZSTD_inBuffer input = { read_buffer.data(), read, 0 };
@@ -68,8 +68,8 @@ std::size_t zstd::decompress(std::ostream &decompressed_out_stream, std::istream
     std::size_t this_chunk_size{std::min(read_buffer.size(), left_to_read)};
 
     while (compressed_in_stream.read(read_buffer.data(), static_cast<std::streamsize>(this_chunk_size)).gcount() > 0) {
-        std::size_t bytes_read = compressed_in_stream.gcount();
-        total_read += static_cast<std::size_t>(bytes_read);
+        auto bytes_read = static_cast<std::size_t>(compressed_in_stream.gcount());
+        total_read += bytes_read;
         left_to_read = compressed_length - total_read;
         this_chunk_size = std::min(read_buffer.size(), left_to_read);
 
