@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     spdlog::info("Creating sessions manager...");
     auto sessions_manager = std::make_shared<SessionsManager>(args.client_timeout,
                                                               SessionsManager::DEFAULT_CHECK_INTERVAL);
-    spdlog::info("Starting server at port: {}", args.port);
+    spdlog::info("Starting server at port: {} with {} certs dir.", args.port, args.certs_directory);
     DropFileServer server{args.port, args.certs_directory, std::move(sessions_manager)};
     server.run();
 }

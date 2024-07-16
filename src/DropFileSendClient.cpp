@@ -17,7 +17,7 @@ DropFileSendClient::~DropFileSendClient() {
 
 SendFileAndReceiveCode DropFileSendClient::sendFSEntryMetadata(const std::string &path) {
     auto [fs_entry, is_compressed] = compressIfNecessary(path);
-    std::cout << "File to send: " << fs_entry.path << std::endl;
+    std::cout << (is_compressed ? "Directory" : "File") << " to send: " << fs_entry.path << std::endl;
     nlohmann::json message_json = InitSessionMessage::createSendMessage(fs_entry.path, is_compressed);
     std::cout << "Requesting DropFileServer for unique receive code..." << std::endl;
     socket.SocketBase::send(message_json.dump());

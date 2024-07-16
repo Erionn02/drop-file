@@ -27,11 +27,14 @@ int main(int argc, char *argv[]) {
             client.receiveFile(*args.receive_code);
         }
     } catch (const DropFileBaseException& e) {
-        std::cerr<<e.what();
+        std::cerr << e.what();
         exit(1);
+    } catch (const boost::wrapexcept<boost::system::system_error> &e) {
+        std::cerr<<"Lost connection. Details: " <<e.what();
+        exit(2);
     } catch (const std::exception& e) {
         std::cerr<<e.what();
-        exit(2);
+        exit(3);
     }
 
     spdlog::info("Done!");

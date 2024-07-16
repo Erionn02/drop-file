@@ -78,7 +78,7 @@ ServerSideClientSession::receiveFile(std::shared_ptr<ServerSideClientSession> se
         std::string data = sender->receive();
         std::size_t left_to_transfer = expected_bytes - total_received_bytes;
         std::size_t write_size = std::min(left_to_transfer, data.size());
-        SocketBase::send(std::string_view{data.data(), write_size});
+        send(std::string_view{data.data(), write_size});
 
         total_received_bytes += write_size;
     }

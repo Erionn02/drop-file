@@ -10,7 +10,7 @@ package_add_test(unit_tests
         ServerArgParserTests.cpp
         SessionsManagerTests.cpp
         FSEntryInfoTests.cpp
-        GzipTests.cpp
+        ZstdTests.cpp
         DEPENDS drop-file-shared-lib
         )
 target_include_directories(unit_tests PRIVATE ../test_utils)

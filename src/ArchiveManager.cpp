@@ -1,6 +1,6 @@
 #include "ArchiveManager.hpp"
 #include "Utils.hpp"
-#include "gzip.hpp"
+#include "zstd.hpp"
 
 #include <fmt/format.h>
 
@@ -53,7 +53,7 @@ void ArchiveManager::unpackFile(std::ifstream &compressed_archive, const FSEntry
         throw ArchiveManagerException(
                 "Failed to open output decompressed_file: " + (directory / entry_info.relative_path).string());
     }
-    gzip::decompress(decompressed_file, compressed_archive, entry_info.compressed_length);
+    zstd::decompress(decompressed_file, compressed_archive, entry_info.compressed_length);
 }
 
 void ArchiveManager::createArchive(const fs::path &new_archive_path) {
@@ -100,7 +100,7 @@ void ArchiveManager::addFile(const fs::path &file_path, std::ofstream &compresse
     if (!input_file.is_open()) {
         throw ArchiveManagerException("Failed to open input file: " + file_path.string());
     }
-    std::size_t bytes_written = gzip::compress(input_file, compressed_archive, [&] {
+    std::size_t bytes_written = zstd::compress(input_file, compressed_archive, [&] {
         progress_bar.tick();
     });
 
