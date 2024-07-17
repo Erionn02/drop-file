@@ -59,7 +59,7 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnSend) {
     ClientArgs args = parseClientArgs(argc, argv_send);
     ASSERT_EQ(args.port, 12345);
     ASSERT_EQ(args.server_domain_name, "localhost");
-    ASSERT_FALSE(args.path_to_server_cert_file.has_value());
+    ASSERT_TRUE(args.verify_cert);
 }
 
 TEST(ClientArgParserTests, setsCorrectDefaultValuesOnReceive) {
@@ -68,15 +68,14 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnReceive) {
     ClientArgs args = parseClientArgs(argc, argv_send);
     ASSERT_EQ(args.port, 12345);
     ASSERT_EQ(args.server_domain_name, "localhost");
-    ASSERT_FALSE(args.path_to_server_cert_file.has_value());
+    ASSERT_TRUE(args.verify_cert);
 }
 
-TEST(ClientArgParserTests, setsPathToServerCertFile) {
-    int argc{5};
-    char * argv_send[] = {"program_name", "--path_to_server_cert_file", "some_path", "receive", "wefwefwe"};
+TEST(ClientArgParserTests, setsVerifyCertArg) {
+    int argc{4};
+    char * argv_send[] = {"program_name", "--allow_self_signed_cert", "receive", "wefwefwe"};
     ClientArgs args = parseClientArgs(argc, argv_send);
-    ASSERT_TRUE(args.path_to_server_cert_file.has_value());
-    ASSERT_EQ(*args.path_to_server_cert_file, "some_path");
+    ASSERT_FALSE(args.verify_cert);
 }
 
 TEST(ClientArgParserTests, trimsSlashesOutOfPaths) {

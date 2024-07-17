@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::err);
     ClientArgs args = parseClientArgs(argc, argv);
 
-    ClientSocket client_socket(args.server_domain_name, args.port, CERTS_DIR"/cert.pem");
+    ClientSocket client_socket(args.server_domain_name, args.port, args.verify_cert);
 
     try {
         if (args.action == Action::send) {

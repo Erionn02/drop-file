@@ -10,7 +10,7 @@ RUN conan profile update conf.tools.system.package_manager:sudo=True drop-file-p
 
 WORKDIR /drop-file
 COPY ./conanfile.txt .
-RUN conan install conanfile.txt
+RUN conan install --build missing conanfile.txt
 COPY . .
 RUN mkdir -p build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Debug .. && cmake --build . -t drop-file-server -- -j $(nproc --all)

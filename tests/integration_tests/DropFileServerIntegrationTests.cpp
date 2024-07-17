@@ -66,7 +66,7 @@ struct DropFileServerIntegrationTests : public Test {
     }
 
     ClientSocket createClientSocket() {
-        return {"localhost", TEST_PORT, EXAMPLE_CERT_DIR "/cert.pem"};
+        return {"localhost", TEST_PORT, false};
     }
 
     DropFileReceiveClient createRecvClient(char character) {

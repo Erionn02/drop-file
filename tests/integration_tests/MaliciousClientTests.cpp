@@ -103,7 +103,7 @@ struct MaliciousClientTests : public Test {
     }
 
     ClientSocket createClientSocket() {
-        return {"localhost", TEST_PORT, EXAMPLE_CERT_DIR "/cert.pem"};
+        return {"localhost", TEST_PORT, false};
     }
 
 };
@@ -138,8 +138,13 @@ TEST_F(MaliciousClientTests, serverDoesNotAllowAbnormallyBigFirstMessages) {
     auto json_msg = InitSessionMessage::createSendMessage(TEST_FILE_PATH, false);
     json_msg[InitSessionMessage::FILE_HASH_KEY] = maliciously_long_file_hash;
     auto msg = json_msg.dump();
-    test_client.SocketBase::send(msg);
-    ASSERT_TRUE(test_client.SocketBase::receive().contains(fmt::format("Tried to send {} bytes, which is more than allowed", msg.size())));
+    test_client.send(msg);
+    try {
+        auto response = test_client.receive();
+        ASSERT_TRUE(response.contains(fmt::format("Tried to send {} bytes, which is more than allowed", msg.size())));
+    } catch (const boost::wrapexcept<boost::system::system_error> &e) {
+        // or disconnects right away
+    }
 }
 
 TEST_F(MaliciousClientTests, receiveClientChecksHashAndDiscardsIfItDoesNotMatch) {

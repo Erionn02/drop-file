@@ -79,7 +79,7 @@ struct ClientSocketTest : public Test {
     }
 
     ClientSocket createClientSocket() {
-        ClientSocket client_socket{"localhost", TEST_PORT, EXAMPLE_CERT_DIR"/cert.pem"};
+        ClientSocket client_socket{"localhost", TEST_PORT, false};
         waitForPeerSocket();
         return client_socket;
     }
@@ -102,7 +102,7 @@ struct ClientSocketTest : public Test {
 
 
 TEST_F(ClientSocketTest, twoSocketsCanTalkToEachOther) {
-    ClientSocket client_socket{"localhost", TEST_PORT, EXAMPLE_CERT_DIR"/cert.pem"};
+    ClientSocket client_socket{"localhost", TEST_PORT, false};
     waitForPeerSocket();
     std::string_view test_message{"Hello, world!"};
     client_socket.send(test_message);

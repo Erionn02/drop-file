@@ -34,8 +34,12 @@ ClientArgs parseClientArgs(int argc, char **argv) {
             .default_value("localhost")
             .help("Server domain name or ip address for self-hosted");
 
-    program.add_argument("--path_to_server_cert_file")
-            .help("Path to server's self-signed certificate (only for self-hosted server)");
+    program.add_argument("-a","--allow_self_signed_cert")
+            .default_value(false)
+            .implicit_value(true)
+            .help("Boolean arg specifying whether client should verify server's cert. "
+                  "Set to false to allow self signed certs. Only for self-hosted. Use with caution.");
+
 
     try {
         program.parse_args(argc, argv);
@@ -56,13 +60,13 @@ ClientArgs parseClientArgs(int argc, char **argv) {
                 .file_to_send_path = file_or_code,
                 .port = program.get<unsigned short>("-p"),
                 .server_domain_name = program.get<std::string>("-d"),
-                .path_to_server_cert_file = program.present("--path_to_server_cert_file")};
+                .verify_cert = !program.get<bool>("-a")};
     } else {
         return {.action = Action::receive,
                 .receive_code = file_or_code,
                 .port = program.get<unsigned short>("-p"),
                 .server_domain_name = program.get<std::string>("-d"),
-                .path_to_server_cert_file = program.present("--path_to_server_cert_file")};
+                .verify_cert = !program.get<bool>("-a")};
     }
 }
 

@@ -7,8 +7,7 @@
 
 class ClientSocket : public SocketBase {
 public:
-    ClientSocket(const std::string& host, unsigned short port);
-    ClientSocket(const std::string& host, unsigned short port, const std::string& path_to_cert_authority_file);
+    ClientSocket(const std::string &host, unsigned short port, bool verify_cert = true);
     ClientSocket(ClientSocket&&) = default;
     ~ClientSocket();
 

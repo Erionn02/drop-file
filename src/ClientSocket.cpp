@@ -2,32 +2,28 @@
 
 #include <spdlog/spdlog.h>
 
-ClientSocket::ClientSocket(const std::string &host, unsigned short port) : ClientSocket(
+ClientSocket::ClientSocket(const std::string &host, unsigned short port, bool verify_cert) : ClientSocket(
         std::make_unique<boost::asio::io_context>(),
         boost::asio::ssl::context{
                 boost::asio::ssl::context::sslv23}) {
-    context.set_default_verify_paths();
-    connect(host, port);
-    start();
-}
+    if (verify_cert) {
+        socket_.set_verify_mode(boost::asio::ssl::verify_peer);
+        socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx) {
+            return verify_certificate(preverified, ctx);
+        });
+    } else {
+        context.set_verify_mode(boost::asio::ssl::verify_fail_if_no_peer_cert);
+        socket_.set_verify_callback([](bool, boost::asio::ssl::verify_context &) {
+            return true;
+        });
+    }
 
-ClientSocket::ClientSocket(const std::string &host, unsigned short port,
-                           const std::string &path_to_cert_authority_file) : ClientSocket(
-        std::make_unique<boost::asio::io_context>(),
-        boost::asio::ssl::context{
-                boost::asio::ssl::context::sslv23}) {
-    context.load_verify_file(path_to_cert_authority_file);
     connect(host, port);
     start();
 }
 
 ClientSocket::ClientSocket(std::unique_ptr<boost::asio::io_context> io_context, boost::asio::ssl::context context)
-        : SocketBase({*io_context, context}), io_context(std::move(io_context)), context(std::move(context)) {
-    socket_.set_verify_mode(boost::asio::ssl::verify_peer);
-    socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx) {
-        return verify_certificate(preverified, ctx);
-    });
-}
+        : SocketBase({*io_context, context}), io_context(std::move(io_context)), context(std::move(context)) {}
 
 ClientSocket::~ClientSocket() {
     if (io_context) {
