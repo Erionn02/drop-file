@@ -23,7 +23,7 @@ I hosted the server under `mydomain` domain, which is also the default domain se
 - Proxy server architecture (clients do not directly communicate)
 
 ## Installation
-To run drop-file client, you need to clone the repository and set up the environment and compile the project.
+To run drop-file client, you need to clone the repository and set up the environment and compile the project (or download latest release, linux only).
 
 ```bash
 git clone https://github.com/Erionn02/drop-file.git
