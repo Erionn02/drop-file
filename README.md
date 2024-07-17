@@ -13,7 +13,6 @@ I hosted the server under `mydomain` domain, which is also the default domain se
 - [Usage](#usage)
 - [Self-hosted](#Self-hosted)
 - [Dependencies](#dependencies)
-- [Examples](#examples)
 - [License](#license)
 
 ## Features
