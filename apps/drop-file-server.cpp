@@ -1,6 +1,6 @@
-#include "DropFileServer.hpp"
-#include "ServerArgs.hpp"
-#include "ServerArgParser.hpp"
+#include "server/DropFileServer.hpp"
+#include "server/ServerArgs.hpp"
+#include "server/ServerArgParser.hpp"
 
 #include <spdlog/spdlog.h>
 

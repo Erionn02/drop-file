@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "FSEntryInfo.hpp"
+#include "client/FSEntryInfo.hpp"
 #include "TestHelpers.hpp"
 
 #include <fstream>

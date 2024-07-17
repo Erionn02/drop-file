@@ -11,6 +11,8 @@ package_add_test(unit_tests
         SessionsManagerTests.cpp
         FSEntryInfoTests.cpp
         ZstdTests.cpp
-        DEPENDS drop-file-shared-lib
+        DEPENDS
+        drop-file-client-lib
+        drop-file-server-lib
         )
 target_include_directories(unit_tests PRIVATE ../test_utils)

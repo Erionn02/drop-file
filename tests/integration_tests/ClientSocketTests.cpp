@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "SocketBase.hpp"
-#include "ClientSocket.hpp"
-#include "DropFileServer.hpp"
+#include "client/ClientSocket.hpp"
+#include "server/DropFileServer.hpp"
 #include "TestHelpers.hpp"
 
 using namespace ::testing;

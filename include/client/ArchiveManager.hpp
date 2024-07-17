@@ -1,6 +1,6 @@
 #pragma once
 #include "DropFileBaseException.hpp"
-#include "FSEntryInfo.hpp"
+#include "client/FSEntryInfo.hpp"
 
 #include <indicators/indeterminate_progress_bar.hpp>
 #include <zlib.h>

@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
 #include "TestHelpers.hpp"
-#include "ClientArgParser.hpp"
-#include "DropFileSendClient.hpp"
-#include "DropFileReceiveClient.hpp"
-#include "DropFileServer.hpp"
+#include "client/ClientArgParser.hpp"
+#include "client/DropFileSendClient.hpp"
+#include "client/DropFileReceiveClient.hpp"
+#include "server/DropFileServer.hpp"
 #include "InitSessionMessage.hpp"
 
 #include <filesystem>

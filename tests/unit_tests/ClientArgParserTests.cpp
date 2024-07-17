@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ClientArgParser.hpp"
+#include "client/ClientArgParser.hpp"
 
 
 using namespace ::testing;
@@ -58,7 +58,7 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnSend) {
     char * argv_send[] = {"program_name", "send", "wefwefwe"};
     ClientArgs args = parseClientArgs(argc, argv_send);
     ASSERT_EQ(args.port, 8088);
-    ASSERT_EQ(args.server_domain_name, "localhost");
+    ASSERT_EQ(args.server_domain_name, ClientArgs::DEFAULT_SERVER_DOMAIN);
     ASSERT_TRUE(args.verify_cert);
 }
 
@@ -67,7 +67,7 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnReceive) {
     char * argv_send[] = {"program_name", "receive", "wefwefwe"};
     ClientArgs args = parseClientArgs(argc, argv_send);
     ASSERT_EQ(args.port, 8088);
-    ASSERT_EQ(args.server_domain_name, "localhost");
+    ASSERT_EQ(args.server_domain_name, ClientArgs::DEFAULT_SERVER_DOMAIN);
     ASSERT_TRUE(args.verify_cert);
 }
 

@@ -1,6 +1,6 @@
-#include "DropFileReceiveClient.hpp"
+#include "client/DropFileReceiveClient.hpp"
 #include "InitSessionMessage.hpp"
-#include "ArchiveManager.hpp"
+#include "client/ArchiveManager.hpp"
 #include "Utils.hpp"
 
 #include <spdlog/spdlog.h>

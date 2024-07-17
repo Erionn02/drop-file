@@ -1,6 +1,6 @@
-#include "ServerSideClientSession.hpp"
+#include "server/ServerSideClientSession.hpp"
 #include "InitSessionMessage.hpp"
-#include "SessionsManager.hpp"
+#include "server/SessionsManager.hpp"
 #include "Utils.hpp"
 
 #include <spdlog/spdlog.h>

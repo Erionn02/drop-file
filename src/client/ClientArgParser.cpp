@@ -1,4 +1,4 @@
-#include "ClientArgParser.hpp"
+#include "client/ClientArgParser.hpp"
 
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
@@ -31,7 +31,7 @@ ClientArgs parseClientArgs(int argc, char **argv) {
             .help("Server port");
 
     program.add_argument("-d", "--domain_name")
-            .default_value("balitohome.duckdns.org")
+            .default_value(ClientArgs::DEFAULT_SERVER_DOMAIN)
             .help("Server domain name or ip address for self-hosted");
 
     program.add_argument("-a","--allow_self_signed_cert")

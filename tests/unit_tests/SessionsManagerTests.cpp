@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "SessionsManager.hpp"
+#include "server/SessionsManager.hpp"
 
 using namespace std::chrono_literals;
 

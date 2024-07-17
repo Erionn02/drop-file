@@ -7,7 +7,9 @@ package_add_test(integration_tests
         DropFileServerIntegrationTests.cpp
         ClientSocketTests.cpp
         MaliciousClientTests.cpp
-        DEPENDS drop-file-shared-lib
+        DEPENDS
+        drop-file-client-lib
+        drop-file-server-lib
         )
 
 target_compile_definitions(integration_tests PRIVATE EXAMPLE_CERT_DIR="${CMAKE_SOURCE_DIR}/example_assets")

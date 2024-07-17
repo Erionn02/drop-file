@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ServerArgParser.hpp"
+#include "server/ServerArgParser.hpp"
 
 
 using namespace ::testing;

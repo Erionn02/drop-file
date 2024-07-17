@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "TestHelpers.hpp"
-#include "zstd.hpp"
+#include "client/zstd.hpp"
 
 #include <filesystem>
 #include <fstream>

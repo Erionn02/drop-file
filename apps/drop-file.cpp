@@ -1,8 +1,8 @@
 #include "InitSessionMessage.hpp"
-#include "ClientSocket.hpp"
-#include "DropFileReceiveClient.hpp"
-#include "DropFileSendClient.hpp"
-#include "ClientArgParser.hpp"
+#include "client/ClientSocket.hpp"
+#include "client/DropFileReceiveClient.hpp"
+#include "client/DropFileSendClient.hpp"
+#include "client/ClientArgParser.hpp"
 
 #include <spdlog/spdlog.h>
 

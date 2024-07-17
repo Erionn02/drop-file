@@ -15,4 +15,6 @@ struct ClientArgs {
     unsigned short port;
     std::string server_domain_name;
     bool verify_cert;
+
+    static inline std::string DEFAULT_SERVER_DOMAIN{"balitohome.duckdns.org"};
 };

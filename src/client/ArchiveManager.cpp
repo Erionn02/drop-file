@@ -1,6 +1,6 @@
-#include "ArchiveManager.hpp"
+#include "client/ArchiveManager.hpp"
 #include "Utils.hpp"
-#include "zstd.hpp"
+#include "client/zstd.hpp"
 
 #include <fmt/format.h>
 

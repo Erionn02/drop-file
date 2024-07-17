@@ -1,4 +1,4 @@
-#include "FSEntryInfo.hpp"
+#include "client/FSEntryInfo.hpp"
 #include "Utils.hpp"
 
 #include <fmt/format.h>

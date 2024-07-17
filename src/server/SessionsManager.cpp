@@ -1,8 +1,8 @@
-#include "SessionsManager.hpp"
-#include "ServerSideClientSession.hpp"
+#include "server/SessionsManager.hpp"
+#include "server/ServerSideClientSession.hpp"
 #include "InitSessionMessage.hpp"
 #include "Utils.hpp"
-#include "JsonWords.hpp"
+#include "server/JsonWords.hpp"
 
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
