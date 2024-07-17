@@ -34,19 +34,21 @@ void addAdditionalInfo(int code_value) {
 
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::warn);
-    ClientArgs args = parseClientArgs(argc, argv);
 
     try {
+        ClientArgs args = parseClientArgs(argc, argv);
         runDropFileClient(args);
+    } catch (const ClientArgParserException& e) {
+        exit(1);
     } catch (const DropFileBaseException& e) {
         std::cerr << e.what() << std::endl;
-        exit(1);
+        exit(2);
     } catch (const boost::wrapexcept<boost::system::system_error> &e) {
         std::cerr<<e.code().message()<< std::endl;
         addAdditionalInfo(e.code().value());
-        exit(2);
+        exit(3);
     } catch (const std::exception& e) {
         std::cerr<<e.what()<< std::endl;
-        exit(3);
+        exit(4);
     }
 }

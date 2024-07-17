@@ -9,16 +9,16 @@ TEST(ClientArgParserTests, throwsWhenNoArgsAreSupplied) {
     int argc{1};
     char * argv[] = {"program_name"};
 
-    ASSERT_THROW(parseClientArgs(argc, argv), std::runtime_error);
+    ASSERT_THROW(parseClientArgs(argc, argv), ClientArgParserException);
 }
 
 TEST(ClientArgParserTests, throwsWhenIncorrectPositionalArgValue) {
     int argc{2};
     char * argv_only_first_arg[] = {"program_name", "not-send_or_receive_string"};
-    ASSERT_THROW(parseClientArgs(argc, argv_only_first_arg), std::runtime_error);
+    ASSERT_THROW(parseClientArgs(argc, argv_only_first_arg), ClientArgParserException);
 
     char * argv[] = {"program_name", "not-send_or_receive_string", "second_arg"};
-    ASSERT_THROW(parseClientArgs(3, argv), std::runtime_error);
+    ASSERT_THROW(parseClientArgs(3, argv), ClientArgParserException);
 
 }
 
@@ -27,8 +27,8 @@ TEST(ClientArgParserTests, throwsWhenOnlyFirstArgValueCorrect) {
     char * argv_send[] = {"program_name", "send"};
     char * argv_recv[] = {"program_name", "receive"};
 
-    ASSERT_THROW(parseClientArgs(argc, argv_send), std::runtime_error);
-    ASSERT_THROW(parseClientArgs(argc, argv_recv), std::runtime_error);
+    ASSERT_THROW(parseClientArgs(argc, argv_send), ClientArgParserException);
+    ASSERT_THROW(parseClientArgs(argc, argv_recv), ClientArgParserException);
 }
 
 TEST(ClientArgParserTests, noThrowWhenCorrectSendArgs) {
