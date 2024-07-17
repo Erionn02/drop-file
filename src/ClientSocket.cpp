@@ -7,11 +7,13 @@ ClientSocket::ClientSocket(const std::string &host, unsigned short port, bool ve
         boost::asio::ssl::context{
                 boost::asio::ssl::context::sslv23}) {
     if (verify_cert) {
+        context.set_default_verify_paths();
         socket_.set_verify_mode(boost::asio::ssl::verify_peer);
         socket_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &ctx) {
             return verify_certificate(preverified, ctx);
         });
     } else {
+        spdlog::warn("Skipping cert verification.");
         context.set_verify_mode(boost::asio::ssl::verify_fail_if_no_peer_cert);
         socket_.set_verify_callback([](bool, boost::asio::ssl::verify_context &) {
             return true;

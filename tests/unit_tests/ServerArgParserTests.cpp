@@ -60,12 +60,12 @@ TEST(ServerArgParserTests, throwsOnTooBigPortNumber) {
 
 TEST(ServerArgParserTests, throwsOnNegativePortNumber) {
     int argc{4};
-    char * argv[] = {"program_name", "/some/directory", "--port","-12345"};
+    char * argv[] = {"program_name", "/some/directory", "--port","-8088"};
     ASSERT_THROW(parseServerArgs(argc, argv), std::exception);
 }
 
 TEST(ServerArgParserTests, throwsOnNegativeTimeout) {
     int argc{4};
-    char * argv[] = {"program_name", "/some/directory", "--timeout","-12345"};
+    char * argv[] = {"program_name", "/some/directory", "--timeout","-8088"};
     ASSERT_THROW(parseServerArgs(argc, argv), std::exception);
 }

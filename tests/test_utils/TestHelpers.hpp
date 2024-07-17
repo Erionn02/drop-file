@@ -64,7 +64,7 @@ inline void assertDirectoriesEqual(const fs::path& dir1, const fs::path& dir2) {
 }
 
 inline std::string generateRandomString(std::size_t length) {
-    static auto &chrs = "0123456789"
+    static auto &chrs = "080886789"
                         "abcdefghijklmnopqrstuvwxyz"
                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

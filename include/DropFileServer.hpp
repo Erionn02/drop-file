@@ -43,9 +43,9 @@ private:
         acceptor_.async_accept(
                 [this](const boost::system::error_code &error, tcp::socket socket) {
                     if (!error) {
-                        auto endpoint = boost::lexical_cast<std::string>(socket.remote_endpoint());
-                        spdlog::info("[DropFileServer] Got new connection, endpoint: {}", endpoint);
                         try {
+                            auto endpoint = boost::lexical_cast<std::string>(socket.remote_endpoint());
+                            spdlog::info("[DropFileServer] Got new connection, endpoint: {}", endpoint);
                             std::make_shared<CreatedSession_t>(std::move(socket), context_,
                                                                       std::weak_ptr{session_manager})->start();
                         } catch(const std::exception& e) {
@@ -62,5 +62,5 @@ private:
     boost::asio::ssl::context context_;
     std::shared_ptr<SessionsManager_t> session_manager;
 public:
-    static inline unsigned short DEFAULT_PORT{12345};
+    static inline unsigned short DEFAULT_PORT{8088};
 };

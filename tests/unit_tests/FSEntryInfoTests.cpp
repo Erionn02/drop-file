@@ -37,7 +37,7 @@ TEST_F(FSEntryInfoTests, canWriteAndReadFromStream) {
     FSEntryInfo entry_info{is_directory, relative_path};
 
     entry_info.writeToStream(archive);
-    auto read_from_stream = FSEntryInfo::readFromStream(archive, 12345);
+    auto read_from_stream = FSEntryInfo::readFromStream(archive, 8088);
     ASSERT_EQ(read_from_stream, entry_info);
     ASSERT_EQ(read_from_stream.relative_path, relative_path.string());
     ASSERT_EQ(read_from_stream.compressed_length, 0);
@@ -54,14 +54,14 @@ TEST_F(FSEntryInfoTests, returnsCorrectPosition) {
     auto size_pos = entry_info.writeToStream(archive);
     std::size_t new_size{2136};
     entry_info.writeCompressedLength(archive, size_pos, new_size);
-    auto read_from_stream = FSEntryInfo::readFromStream(archive, 12345);
+    auto read_from_stream = FSEntryInfo::readFromStream(archive, 8088);
     ASSERT_EQ(read_from_stream.compressed_length, new_size);
 }
 
 TEST_F(FSEntryInfoTests, throwsWhenStreamIsEmpty) {
     std::stringstream archive;
 
-    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 12345)), FSEntryInfoException);
+    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 8088)), FSEntryInfoException);
 }
 
 TEST_F(FSEntryInfoTests, throwsWhenThereIsNotEnoughBytesForPathLength) {
@@ -69,7 +69,7 @@ TEST_F(FSEntryInfoTests, throwsWhenThereIsNotEnoughBytesForPathLength) {
     bool is_directory = false;
     archive.write(std::bit_cast<char *>(&is_directory), sizeof(is_directory));
 
-    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 12345)), FSEntryInfoException);
+    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 8088)), FSEntryInfoException);
 }
 
 TEST_F(FSEntryInfoTests, throwsWhenPathIsTooLong) {
@@ -79,7 +79,7 @@ TEST_F(FSEntryInfoTests, throwsWhenPathIsTooLong) {
     std::size_t path_length{FSEntryInfo::PATH_MAX_LEN + 1};
     archive.write(std::bit_cast<char *>(&path_length), sizeof(path_length));
 
-    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 12345)), FSEntryInfoException);
+    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 8088)), FSEntryInfoException);
 }
 
 TEST_F(FSEntryInfoTests, throwsWhenThereIsNotEnoughBytesForCompressedSize) {
@@ -91,7 +91,7 @@ TEST_F(FSEntryInfoTests, throwsWhenThereIsNotEnoughBytesForCompressedSize) {
     archive.write(std::bit_cast<char *>(&path_length), sizeof(path_length));
     archive << path;
 
-    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 12345)), FSEntryInfoException);
+    ASSERT_THROW((FSEntryInfo::readFromStream(archive, 8088)), FSEntryInfoException);
 }
 
 TEST_F(FSEntryInfoTests, throwsWhenCompressedLengthIsBiggerThanBytesLeftInStream) {
@@ -119,7 +119,7 @@ TEST_F(FSEntryInfoTests, noThrowWhenAllGood) {
     std::size_t compressed_length{1234};
     archive.write(std::bit_cast<char *>(&compressed_length), sizeof(compressed_length));
 
-    auto read_from_stream = FSEntryInfo::readFromStream(archive, 12345);
+    auto read_from_stream = FSEntryInfo::readFromStream(archive, 8088);
     ASSERT_EQ(read_from_stream.relative_path, path);
     ASSERT_EQ(read_from_stream.compressed_length, compressed_length);
     ASSERT_EQ(read_from_stream.is_directory, is_directory);

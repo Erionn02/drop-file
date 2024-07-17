@@ -26,12 +26,12 @@ ClientArgs parseClientArgs(int argc, char **argv) {
             .help("Either path to file to send or code words to receive file.");
 
     program.add_argument("-p", "--port")
-            .default_value(std::uint16_t{12345})
+            .default_value(std::uint16_t{8088})
             .scan<'u', unsigned short>()
             .help("Server port");
 
     program.add_argument("-d", "--domain_name")
-            .default_value("localhost")
+            .default_value("balitohome.duckdns.org")
             .help("Server domain name or ip address for self-hosted");
 
     program.add_argument("-a","--allow_self_signed_cert")

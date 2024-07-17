@@ -37,7 +37,7 @@ void ServerSideClientSession::handleFirstRead(std::string_view content) {
     } catch (const DropFileBaseException &e) {
         safeDisconnect(e.what());
     } catch (const boost::wrapexcept<boost::system::system_error> &e) {
-        spdlog::warn("Boost exception: {}", e.what());
+        spdlog::warn("Boost exception: {}", e.code().message());
     }
 }
 
