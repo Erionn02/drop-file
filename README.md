@@ -39,7 +39,10 @@ sudo cp drop-file /usr/bin
 Drop File consists of a server and a client application. The server manages file transfer requests
 and clients connect to the server to either send or receive files.
 
-![](./example_assets/send_directory.gif) ![](./example_assets/receive_directory.gif)
+Sender          |  Receiver
+:-------------------------:|:-------------------------:
+![](./example_assets/send_directory.gif)  |  ![](./example_assets/receive_directory.gif)
+ 
 
 ## Self-hosted
 If you want to host this server just for yourself, you are free to do so.
