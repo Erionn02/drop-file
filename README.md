@@ -4,7 +4,7 @@
 Drop File is my C++ implementation inspired by the popular open-source project [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole). 
 This tool enables the secure transfer of files between two devices using drop-file-server. 
 The communication is encrypted, and the server can be self-hosted and launched in a Docker container.
-I hosted the server under `mydomain` domain, which is also the default domain set in client. Default drop-file project port is 8088.
+I hosted the server under `balitohome.duckdns.org` domain, which is also the default domain set in client. Default drop-file project port is 8088.
 
 ## Table of Contents
 - [Introduction](#introduction)
