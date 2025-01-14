@@ -1,6 +1,7 @@
 #pragma once
 #include "DropFileBaseException.hpp"
 
+#include <stdint.h>
 #include <indicators/progress_bar.hpp>
 
 #include <filesystem>
