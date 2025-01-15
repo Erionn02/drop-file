@@ -1,0 +1,1 @@
+lizard --CCN 5 --arguments 3 --length 35 --languages cpp ./src/* ./include/* ./tests/* ./apps/* -t $(nproc --all)

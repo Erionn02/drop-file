@@ -16,6 +16,7 @@ FSEntryInfo::FSEntryInfo(bool is_directory, const std::filesystem::path &relativ
 }
 
 FSEntryInfo FSEntryInfo::readFromStream(std::istream &stream, std::size_t total_stream_size) {
+    // #lizard forgives
     FSEntryInfo entry_info;
     stream.read(std::bit_cast<char *>(&entry_info.is_directory), sizeof(entry_info.is_directory));
     if (stream.gcount() != sizeof(entry_info.is_directory)) {
