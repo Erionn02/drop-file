@@ -10,6 +10,6 @@ struct ServerArgs {
     unsigned short port{};
     std::chrono::seconds client_timeout{};
 
-    static inline unsigned short DEFAULT_PORT{8088};
+    static inline unsigned short DEFAULT_PORT{8080};
     static inline std::chrono::seconds DEFAULT_CLIENT_TIMEOUT{120};
 };

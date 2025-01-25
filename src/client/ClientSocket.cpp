@@ -5,7 +5,7 @@
 ClientSocket::ClientSocket(const std::string &host, unsigned short port, bool verify_cert) : ClientSocket(
         std::make_unique<boost::asio::io_context>(),
         boost::asio::ssl::context{
-                boost::asio::ssl::context::sslv23}) {
+                boost::asio::ssl::context::tls}) {
     if (verify_cert) {
         context.set_default_verify_paths();
         socket_.set_verify_mode(boost::asio::ssl::verify_peer);

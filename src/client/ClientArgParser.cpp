@@ -26,7 +26,7 @@ ClientArgs parseClientArgs(int argc, char **argv) {
             .help("Either path to file to send or code words to receive file.");
 
     program.add_argument("-p", "--port")
-            .default_value(std::uint16_t{8088})
+            .default_value(std::uint16_t{8080})
             .scan<'u', unsigned short>()
             .help("Server port");
 

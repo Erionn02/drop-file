@@ -62,5 +62,5 @@ private:
     boost::asio::ssl::context context_;
     std::shared_ptr<SessionsManager_t> session_manager;
 public:
-    static inline unsigned short DEFAULT_PORT{8088};
+    static inline unsigned short DEFAULT_PORT{8080};
 };

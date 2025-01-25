@@ -57,7 +57,7 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnSend) {
     int argc{3};
     char * argv_send[] = {"program_name", "send", "wefwefwe"};
     ClientArgs args = parseClientArgs(argc, argv_send);
-    ASSERT_EQ(args.port, 8088);
+    ASSERT_EQ(args.port, 8080);
     ASSERT_EQ(args.server_domain_name, ClientArgs::DEFAULT_SERVER_DOMAIN);
     ASSERT_TRUE(args.verify_cert);
 }
@@ -66,7 +66,7 @@ TEST(ClientArgParserTests, setsCorrectDefaultValuesOnReceive) {
     int argc{3};
     char * argv_send[] = {"program_name", "receive", "wefwefwe"};
     ClientArgs args = parseClientArgs(argc, argv_send);
-    ASSERT_EQ(args.port, 8088);
+    ASSERT_EQ(args.port, 8080);
     ASSERT_EQ(args.server_domain_name, ClientArgs::DEFAULT_SERVER_DOMAIN);
     ASSERT_TRUE(args.verify_cert);
 }

@@ -14,4 +14,5 @@ cmake --build . -- -j$(nproc)
 ctest --output-on-failure
 
 cd ..
+gcovr -r . $build_dir --exclude  apps
 gcovr -r . $build_dir --exclude  apps --fail-under-function 85 --sonarqube $build_dir/code-coverage.xml
